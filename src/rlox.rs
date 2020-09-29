@@ -1,9 +1,10 @@
-use anyhow::Result;
-use std::io::stdin;
+use anyhow::{Context, Result};
 use std::fs::read_to_string;
+use std::io::stdin;
 
 pub fn run_file(path: String) -> Result<()> {
-    let s = read_to_string(path)?;
+    let s =
+        read_to_string(path.clone()).with_context(|| format!("couldn't read file `{}`", path))?;
     run(s);
 
     Ok(())

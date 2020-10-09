@@ -1,4 +1,6 @@
 mod rlox;
+mod scanner;
+mod token;
 
 use anyhow::Result;
 use clap::{App, Arg};

@@ -1,5 +1,5 @@
 #[allow(unused)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen,
@@ -46,6 +46,7 @@ pub enum TokenType {
     Eof,
 }
 
+#[derive(Clone, Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,

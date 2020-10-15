@@ -1,3 +1,4 @@
+mod expr;
 mod rlox;
 mod scanner;
 mod token;

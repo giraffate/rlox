@@ -48,7 +48,7 @@ impl Default for Scanner {
 
 impl Scanner {
     pub fn scan_tokens(&mut self) -> Vec<Token> {
-        while self.is_at_end() {
+        while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
         }
@@ -338,5 +338,15 @@ mod tests {
     fn test_is_digit() {
         assert_eq!(is_digit('0'), true);
         assert_eq!(is_digit('a'), false);
+    }
+
+    #[test]
+    fn test_simple_scan_tokens() {
+        let s = "1 + 2";
+        let mut scanner = Scanner { source: s.chars().collect(), ..Default::default() };
+        let tokens = scanner.scan_tokens();
+        assert_eq!(tokens[0].token_type, TokenType::Number);
+        assert_eq!(tokens[1].token_type, TokenType::Plus);
+        assert_eq!(tokens[2].token_type, TokenType::Number);
     }
 }

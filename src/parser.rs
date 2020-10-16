@@ -1,5 +1,5 @@
-use crate::token::{Token, TokenType};
 use crate::expr::Expr;
+use crate::token::{Token, TokenType};
 
 pub struct Parser {
     pub tokens: Vec<Token>,
@@ -26,7 +26,12 @@ impl Parser {
     fn comparison(&mut self) -> Expr {
         let mut expr = self.term();
 
-        while self.is_match(vec![TokenType::GreaterEqual, TokenType::Greater, TokenType::LessEqual, TokenType::Less]) {
+        while self.is_match(vec![
+            TokenType::GreaterEqual,
+            TokenType::Greater,
+            TokenType::LessEqual,
+            TokenType::Less,
+        ]) {
             let op = self.previous();
             let right = self.term();
             expr = Expr::Binary(Box::new(expr), op, Box::new(right));
@@ -80,7 +85,10 @@ impl Parser {
             Expr::Literal(self.previous().lit.unwrap())
         } else if self.is_match(vec![TokenType::LeftParen]) {
             let expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.".to_string());
+            self.consume(
+                TokenType::RightParen,
+                "Expect ')' after expression.".to_string(),
+            );
             Expr::Grouping(Box::new(expr))
         } else {
             panic!("not to land here");
@@ -95,9 +103,10 @@ impl Parser {
         }
     }
 
-    fn is_match(&self, token_types: Vec<TokenType>) -> bool {
+    fn is_match(&mut self, token_types: Vec<TokenType>) -> bool {
         for token_type in token_types.iter() {
             if self.check(*token_type) {
+                self.advance();
                 return true;
             }
         }
@@ -131,5 +140,36 @@ impl Parser {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::expr::Expr;
+    use crate::scanner::Scanner;
 
-
+    #[test]
+    fn test_expression() {
+        let s = "1 + 2";
+        let mut scanner = Scanner {
+            source: s.chars().collect(),
+            ..Default::default()
+        };
+        let tokens = scanner.scan_tokens();
+        let mut parser = Parser {
+            tokens: tokens,
+            current: 0,
+        };
+        assert_eq!(
+            parser.expression(),
+            Expr::Binary(
+                Box::new(Expr::Literal("1".to_string())),
+                Token {
+                    token_type: TokenType::Plus,
+                    lexeme: "+".to_string(),
+                    lit: None,
+                    line: 1
+                },
+                Box::new(Expr::Literal("2".to_string()))
+            )
+        );
+    }
+}

@@ -26,12 +26,12 @@ lazy_static! {
     };
 }
 
-struct Scanner {
-    source: Vec<char>,
-    tokens: Vec<Token>,
-    start: usize,
-    current: usize,
-    line: usize,
+pub struct Scanner {
+    pub source: Vec<char>,
+    pub tokens: Vec<Token>,
+    pub start: usize,
+    pub current: usize,
+    pub line: usize,
 }
 
 impl Default for Scanner {
@@ -47,7 +47,7 @@ impl Default for Scanner {
 }
 
 impl Scanner {
-    pub fn scan_tokens(&mut self) {
+    pub fn scan_tokens(&mut self) -> Vec<Token> {
         while self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -58,6 +58,7 @@ impl Scanner {
             lit: None,
             line: self.line,
         });
+        self.tokens.clone()
     }
 
     fn scan_token(&mut self) {

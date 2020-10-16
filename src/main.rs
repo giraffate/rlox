@@ -1,6 +1,7 @@
 mod expr;
 mod rlox;
 mod scanner;
+mod parser;
 mod token;
 
 use anyhow::Result;

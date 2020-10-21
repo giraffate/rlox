@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::token::{Literal, Token};
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
@@ -8,7 +8,7 @@ pub enum Expr {
     Call(Box<Expr>, Token, Vec<Expr>),
     Get(Box<Expr>, Token),
     Grouping(Box<Expr>),
-    Literal(String),
+    Literal(Literal),
     Logical(Box<Expr>, Token, Box<Expr>),
     Set(Box<Expr>, Token, Box<Expr>),
     Super(Token, Token),

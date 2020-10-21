@@ -1,5 +1,5 @@
 use crate::expr::Expr;
-use crate::token::{Token, TokenType};
+use crate::token::{Literal, Token, TokenType};
 
 pub struct Parser {
     pub tokens: Vec<Token>,
@@ -76,11 +76,11 @@ impl Parser {
 
     fn primary(&mut self) -> Expr {
         if self.is_match(vec![TokenType::False]) {
-            Expr::Literal("false".to_string())
+            Expr::Literal(Literal::Bool(false))
         } else if self.is_match(vec![TokenType::True]) {
-            Expr::Literal("true".to_string())
+            Expr::Literal(Literal::Bool(true))
         } else if self.is_match(vec![TokenType::Nil]) {
-            Expr::Literal("nil".to_string())
+            Expr::Literal(Literal::Nil)
         } else if self.is_match(vec![TokenType::Number, TokenType::Str]) {
             Expr::Literal(self.previous().lit.unwrap())
         } else if self.is_match(vec![TokenType::LeftParen]) {
@@ -161,14 +161,14 @@ mod tests {
         assert_eq!(
             parser.expression(),
             Expr::Binary(
-                Box::new(Expr::Literal("1".to_string())),
+                Box::new(Expr::Literal(Literal::Number(1f64))),
                 Token {
                     token_type: TokenType::Plus,
                     lexeme: "+".to_string(),
                     lit: None,
                     line: 1
                 },
-                Box::new(Expr::Literal("2".to_string()))
+                Box::new(Expr::Literal(Literal::Number(2f64)))
             )
         );
     }

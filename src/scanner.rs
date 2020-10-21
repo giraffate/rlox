@@ -1,5 +1,5 @@
 use crate::token::TokenType::*;
-use crate::token::{Token, TokenType};
+use crate::token::{Literal, Token, TokenType};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
@@ -127,7 +127,7 @@ impl Scanner {
         self.source[self.current - 1]
     }
 
-    fn add_token(&mut self, token_type: TokenType, lit: Option<String>) {
+    fn add_token(&mut self, token_type: TokenType, lit: Option<Literal>) {
         let token = Token {
             token_type: token_type,
             lexeme: self.source[self.start..self.current].iter().collect(),
@@ -187,7 +187,7 @@ impl Scanner {
         let s = self.source[self.start + 1..self.current - 1]
             .iter()
             .collect();
-        self.add_token(Str, Some(s));
+        self.add_token(Str, Some(Literal::Str(s)));
     }
 
     fn number(&mut self) {
@@ -203,8 +203,12 @@ impl Scanner {
             }
         }
 
-        let n = self.source[self.start..self.current].iter().collect();
-        self.add_token(Number, Some(n));
+        let n: f64 = self.source[self.start..self.current]
+            .iter()
+            .collect::<String>()
+            .parse()
+            .unwrap();
+        self.add_token(Number, Some(Literal::Number(n)));
     }
 
     fn identifier(&mut self) {
@@ -304,7 +308,10 @@ mod tests {
         scanner.advance();
         scanner.string();
         let token = &scanner.tokens[0];
-        assert_eq!(token.lit.as_ref().unwrap(), "Hello \n world!");
+        assert_eq!(
+            token.lit.as_ref().unwrap(),
+            &Literal::Str("Hello \n world!".to_string())
+        );
         assert_eq!(scanner.line, 2);
     }
 
@@ -318,7 +325,7 @@ mod tests {
         scanner.advance();
         scanner.number();
         let token = &scanner.tokens[0];
-        assert_eq!(token.lit.as_ref().unwrap(), "123");
+        assert_eq!(token.lit.as_ref().unwrap(), &Literal::Number(123f64));
     }
 
     #[test]
@@ -331,7 +338,7 @@ mod tests {
         scanner.advance();
         scanner.number();
         let token = &scanner.tokens[0];
-        assert_eq!(token.lit.as_ref().unwrap(), "123.456");
+        assert_eq!(token.lit.as_ref().unwrap(), &Literal::Number(123.456f64));
     }
 
     #[test]
@@ -343,7 +350,10 @@ mod tests {
     #[test]
     fn test_simple_scan_tokens() {
         let s = "1 + 2";
-        let mut scanner = Scanner { source: s.chars().collect(), ..Default::default() };
+        let mut scanner = Scanner {
+            source: s.chars().collect(),
+            ..Default::default()
+        };
         let tokens = scanner.scan_tokens();
         assert_eq!(tokens[0].token_type, TokenType::Number);
         assert_eq!(tokens[1].token_type, TokenType::Plus);

@@ -1,7 +1,10 @@
+mod error;
 mod expr;
+mod interpreter;
+mod lox_value;
+mod parser;
 mod rlox;
 mod scanner;
-mod parser;
 mod token;
 
 use anyhow::Result;

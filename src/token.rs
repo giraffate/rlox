@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::lox_value::LoxValue;
+
 #[allow(unused)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TokenType {
@@ -62,6 +64,17 @@ pub enum Literal {
     Str(String),
     Bool(bool),
     Nil,
+}
+
+impl Literal {
+    pub fn value(&self) -> LoxValue {
+        match self {
+            Literal::Number(n) => LoxValue::Number(*n),
+            Literal::Str(s) => LoxValue::Str(s.to_string()),
+            Literal::Bool(b) => LoxValue::Bool(*b),
+            Literal::Nil => LoxValue::Nil,
+        }
+    }
 }
 
 impl fmt::Display for Literal {

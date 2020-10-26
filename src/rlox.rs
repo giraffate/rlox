@@ -2,8 +2,10 @@ use anyhow::{Context, Result};
 use std::fs::read_to_string;
 use std::io::stdin;
 
-use crate::scanner::Scanner;
+use crate::expr::Visitor;
+use crate::interpreter::Interpreter;
 use crate::parser::Parser;
+use crate::scanner::Scanner;
 
 pub fn run_file(path: String) -> Result<()> {
     let s =
@@ -27,9 +29,16 @@ pub fn run_prompt() -> Result<()> {
 }
 
 fn run(s: String) {
-    let mut scanner = Scanner { source: s.chars().collect(), ..Default::default() };
+    let mut scanner = Scanner {
+        source: s.chars().collect(),
+        ..Default::default()
+    };
     let tokens = scanner.scan_tokens();
-    let mut parser = Parser { tokens: tokens, current: 0 };
+    let mut parser = Parser {
+        tokens: tokens,
+        current: 0,
+    };
     let expr = parser.expression();
-    println!("{:?}", expr);
+    let interpreter = Interpreter {};
+    println!("{}", interpreter.visit_expr(&expr).expect("runtime error"));
 }

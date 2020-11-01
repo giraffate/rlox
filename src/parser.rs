@@ -1,4 +1,5 @@
 use crate::expr::Expr;
+use crate::stmt::Stmt;
 use crate::token::{Literal, Token, TokenType};
 
 pub struct Parser {
@@ -7,6 +8,34 @@ pub struct Parser {
 }
 
 impl Parser {
+    pub fn parse(&mut self) -> Vec<Stmt> {
+        let mut stmts = Vec::new();
+        while !self.is_at_end() {
+            stmts.push(self.statement());
+        }
+        stmts
+    }
+
+    fn statement(&mut self) -> Stmt {
+        if self.is_match(vec![TokenType::Print]) {
+            self.print_statement()
+        } else {
+            self.expr_statement()
+        }
+    }
+
+    fn print_statement(&mut self) -> Stmt {
+        let expr = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ';' after value.".to_string());
+        Stmt::Print(expr)
+    }
+
+    fn expr_statement(&mut self) -> Stmt {
+        let expr = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ';' after value.".to_string());
+        Stmt::Expr(expr)
+    }
+
     pub fn expression(&mut self) -> Expr {
         self.equality()
     }

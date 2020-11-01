@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use std::fs::read_to_string;
 use std::io::stdin;
 
-use crate::expr::Visitor;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::scanner::Scanner;
@@ -38,7 +37,7 @@ fn run(s: String) {
         tokens: tokens,
         current: 0,
     };
-    let expr = parser.expression();
+    let stmts = parser.parse();
     let interpreter = Interpreter {};
-    println!("{}", interpreter.visit_expr(&expr).expect("runtime error"));
+    interpreter.interpret(stmts);
 }

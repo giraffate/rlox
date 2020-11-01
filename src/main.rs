@@ -5,7 +5,9 @@ mod lox_value;
 mod parser;
 mod rlox;
 mod scanner;
+mod stmt;
 mod token;
+mod visitor;
 
 use anyhow::Result;
 use clap::{App, Arg};

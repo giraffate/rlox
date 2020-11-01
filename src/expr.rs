@@ -1,6 +1,8 @@
 use crate::error::Error;
 use crate::lox_value::LoxValue;
 use crate::token::{Literal, Token, TokenType};
+use crate::visitor::Visitor;
+
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
@@ -97,11 +99,5 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &V, expr: &Expr) -> Result<LoxVal
             kind: "syntax error".to_string(),
             msg: "unreachable".to_string(),
         }),
-    }
-}
-
-pub trait Visitor {
-    fn visit_expr(&self, expr: &Expr) -> Result<LoxValue, Error> {
-        walk_expr(self, expr)
     }
 }

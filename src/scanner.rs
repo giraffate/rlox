@@ -15,7 +15,7 @@ lazy_static! {
         map.insert("if", If);
         map.insert("nil", Nil);
         map.insert("or", Or);
-        map.insert("pring", Print);
+        map.insert("print", Print);
         map.insert("return", Return);
         map.insert("super", Super);
         map.insert("this", This);
@@ -212,14 +212,12 @@ impl Scanner {
     }
 
     fn identifier(&mut self) {
-        while is_alpha_number(self.peek_next()) && !self.is_at_end() {
+        while is_alpha_number(self.peek()) && !self.is_at_end() {
             self.advance();
         }
         let text: String = self.source[self.start..self.current].iter().collect();
         let token_type = KEYWORDS.get(text.as_str()).unwrap_or(&Identifier);
         self.add_token(*token_type, None);
-
-        self.add_token(Identifier, None);
     }
 }
 
@@ -232,7 +230,7 @@ fn is_alpha(c: char) -> bool {
 }
 
 fn is_alpha_number(c: char) -> bool {
-    is_digit(c) || is_alpha_number(c)
+    is_digit(c) || is_alpha(c)
 }
 
 #[cfg(test)]
@@ -358,5 +356,46 @@ mod tests {
         assert_eq!(tokens[0].token_type, TokenType::Number);
         assert_eq!(tokens[1].token_type, TokenType::Plus);
         assert_eq!(tokens[2].token_type, TokenType::Number);
+    }
+
+    #[test]
+    fn test_print_string() {
+        let s = "print \"one\";";
+        let mut scanner = Scanner {
+            source: s.chars().collect(),
+            ..Default::default()
+        };
+        let tokens = scanner.scan_tokens();
+        assert_eq!(tokens[0].token_type, TokenType::Print);
+        assert_eq!(tokens[1].token_type, TokenType::Str);
+        assert_eq!(tokens[2].token_type, TokenType::Semicolon);
+    }
+
+    #[test]
+    fn test_print_bool() {
+        let s = "print true;";
+        let mut scanner = Scanner {
+            source: s.chars().collect(),
+            ..Default::default()
+        };
+        let tokens = scanner.scan_tokens();
+        assert_eq!(tokens[0].token_type, TokenType::Print);
+        assert_eq!(tokens[1].token_type, TokenType::True);
+        assert_eq!(tokens[2].token_type, TokenType::Semicolon);
+    }
+
+    #[test]
+    fn test_print_binary() {
+        let s = "print 1 + 1;";
+        let mut scanner = Scanner {
+            source: s.chars().collect(),
+            ..Default::default()
+        };
+        let tokens = scanner.scan_tokens();
+        assert_eq!(tokens[0].token_type, TokenType::Print);
+        assert_eq!(tokens[1].token_type, TokenType::Number);
+        assert_eq!(tokens[2].token_type, TokenType::Plus);
+        assert_eq!(tokens[3].token_type, TokenType::Number);
+        assert_eq!(tokens[4].token_type, TokenType::Semicolon);
     }
 }

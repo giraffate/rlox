@@ -94,7 +94,7 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &V, expr: &Expr) -> Result<LoxVal
                 }),
             }
         }
-        // Expr::Variable(_) => {}
+        Expr::Variable(name) => visitor.visit_var_expr(name),
         _ => Err(Error {
             kind: "syntax error".to_string(),
             msg: "unreachable".to_string(),

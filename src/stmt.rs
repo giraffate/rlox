@@ -13,11 +13,11 @@ pub enum Stmt {
     If(Expr, Box<Stmt>, Box<Stmt>),
     Print(Expr),
     Return(Token, Expr),
-    Var(Token, Expr),
+    Var(Token, Option<Expr>),
     While(Expr, Box<Stmt>),
 }
 
-pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &V, stmt: &Stmt) -> Result<LoxValue, Error> {
+pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<LoxValue, Error> {
     match stmt {
         Stmt::Expr(expr) => visitor.visit_expr(expr),
         Stmt::Print(expr) => {
@@ -25,6 +25,7 @@ pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &V, stmt: &Stmt) -> Result<LoxVal
             println!("{}", v);
             Ok(LoxValue::Nil)
         }
+        Stmt::Var(name, init) => visitor.visit_var_stmt(name, init.as_ref()),
         _ => Err(Error {
             kind: "runtime error".to_string(),
             msg: "unreachable".to_string(),

@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use std::fs::read_to_string;
 use std::io::stdin;
 
+use crate::env::Env;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::scanner::Scanner;
@@ -38,6 +39,9 @@ fn run(s: String) {
         current: 0,
     };
     let stmts = parser.parse();
-    let interpreter = Interpreter {};
-    interpreter.interpret(stmts);
+    let mut interpreter = Interpreter { env: Env::new() };
+    match interpreter.interpret(stmts) {
+        Ok(value) => {}
+        Err(err) => println!("{}", err),
+    }
 }

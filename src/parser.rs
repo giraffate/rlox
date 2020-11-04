@@ -11,9 +11,31 @@ impl Parser {
     pub fn parse(&mut self) -> Vec<Stmt> {
         let mut stmts = Vec::new();
         while !self.is_at_end() {
-            stmts.push(self.statement());
+            stmts.push(self.declaration());
         }
         stmts
+    }
+
+    fn declaration(&mut self) -> Stmt {
+        if self.is_match(vec![TokenType::Var]) {
+            self.var_declaration()
+        } else {
+            self.statement()
+        }
+    }
+
+    fn var_declaration(&mut self) -> Stmt {
+        let name = self.consume(TokenType::Identifier, "expect variable name".to_string());
+        let init = if self.is_match(vec![TokenType::Equal]) {
+            Some(self.expression())
+        } else {
+            None
+        };
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.".to_string(),
+        );
+        Stmt::Var(name, init)
     }
 
     fn statement(&mut self) -> Stmt {
@@ -119,6 +141,8 @@ impl Parser {
                 "Expect ')' after expression.".to_string(),
             );
             Expr::Grouping(Box::new(expr))
+        } else if self.is_match(vec![TokenType::Identifier]) {
+            Expr::Variable(self.previous())
         } else {
             panic!("not to land here");
         }

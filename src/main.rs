@@ -1,3 +1,4 @@
+mod env;
 mod error;
 mod expr;
 mod interpreter;

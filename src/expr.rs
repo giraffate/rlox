@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::lox_value::LoxValue;
-use crate::token::{Literal, Token, TokenType};
+use crate::token::{Literal, Token};
 use crate::visitor::Visitor;
 
 use std::fmt;
@@ -55,45 +55,16 @@ impl fmt::Display for Expr {
 pub fn walk_expr<V: Visitor + ?Sized>(visitor: &V, expr: &Expr) -> Result<LoxValue, Error> {
     match expr {
         // Expr::Assign(_, _) => {}
-        Expr::Binary(left_expr, op, right_expr) => {
-            let left = walk_expr(visitor, left_expr)?;
-            let right = walk_expr(visitor, right_expr)?;
-            match op.token_type {
-                TokenType::Minus => left.subtract(right),
-                TokenType::Plus => left.plus(right),
-                TokenType::Star => left.multiply(right),
-                TokenType::Slash => left.divide(right),
-                TokenType::Greater => left.greater(right),
-                TokenType::GreaterEqual => left.greater_equal(right),
-                TokenType::Less => left.less(right),
-                TokenType::LessEqual => left.less_equal(right),
-                TokenType::EqualEqual => left.equal_equal(right),
-                TokenType::BangEqual => left.bang_equal(right),
-                _ => Err(Error {
-                    kind: "syntax error".to_string(),
-                    msg: "invalid operator in binary".to_string(),
-                }),
-            }
-        }
+        Expr::Binary(left, op, right) => visitor.visit_binary(left, op, right),
         // Expr::Call(_, _, _) => {}
         // Expr::Get(_, _) => {}
-        Expr::Grouping(expr) => walk_expr(visitor, expr),
-        Expr::Literal(lit) => Ok(lit.value()),
+        Expr::Grouping(expr) => visitor.visit_grouping(expr),
+        Expr::Literal(lit) => visitor.visit_literal(lit),
         // Expr::Logical(_, _, _) => {}
         // Expr::Set(_, _, _) => {}
         // Expr::Super(_, _) => {}
         // Expr::This(_) => {}
-        Expr::Unary(token, expr) => {
-            let right = walk_expr(visitor, expr)?;
-            match token.token_type {
-                TokenType::Minus => right.negate_number(),
-                TokenType::Bang => right.negate(),
-                _ => Err(Error {
-                    kind: "syntax error".to_string(),
-                    msg: "invalid operator in unary".to_string(),
-                }),
-            }
-        }
+        Expr::Unary(token, expr) => visitor.visit_unary(token, expr),
         Expr::Variable(name) => visitor.visit_var_expr(name),
         _ => Err(Error {
             kind: "syntax error".to_string(),

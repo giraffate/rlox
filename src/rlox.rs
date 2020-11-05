@@ -41,7 +41,7 @@ fn run(s: String) {
     let stmts = parser.parse();
     let mut interpreter = Interpreter { env: Env::new() };
     match interpreter.interpret(stmts) {
-        Ok(value) => {}
+        Ok(_) => {}
         Err(err) => println!("{}", err),
     }
 }

@@ -19,12 +19,8 @@ pub enum Stmt {
 
 pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<LoxValue, Error> {
     match stmt {
-        Stmt::Expr(expr) => visitor.visit_expr(expr),
-        Stmt::Print(expr) => {
-            let v = visitor.visit_expr(expr)?;
-            println!("{}", v);
-            Ok(LoxValue::Nil)
-        }
+        Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
+        Stmt::Print(expr) => visitor.visit_print(expr),
         Stmt::Var(name, init) => visitor.visit_var_stmt(name, init.as_ref()),
         _ => Err(Error {
             kind: "runtime error".to_string(),

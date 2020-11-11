@@ -11,7 +11,13 @@ pub struct Interpreter {
 }
 
 impl Visitor for Interpreter {
-    fn visit_binary(&self, left: &Expr, op: &Token, right: &Expr) -> Result<LoxValue, Error> {
+    fn visit_assign(&mut self, left: &Token, right: &Expr) -> Result<LoxValue, Error> {
+        let value = self.visit_expr(right)?;
+        self.env.insert(left.lexeme.clone(), value);
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_binary(&mut self, left: &Expr, op: &Token, right: &Expr) -> Result<LoxValue, Error> {
         let left = walk_expr(self, left)?;
         let right = walk_expr(self, right)?;
         match op.token_type {
@@ -32,15 +38,15 @@ impl Visitor for Interpreter {
         }
     }
 
-    fn visit_grouping(&self, expr: &Expr) -> Result<LoxValue, Error> {
+    fn visit_grouping(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
         walk_expr(self, expr)
     }
 
-    fn visit_literal(&self, lit: &Literal) -> Result<LoxValue, Error> {
+    fn visit_literal(&mut self, lit: &Literal) -> Result<LoxValue, Error> {
         Ok(lit.value())
     }
 
-    fn visit_unary(&self, token: &Token, expr: &Expr) -> Result<LoxValue, Error> {
+    fn visit_unary(&mut self, token: &Token, expr: &Expr) -> Result<LoxValue, Error> {
         let right = walk_expr(self, expr)?;
         match token.token_type {
             TokenType::Minus => right.negate_number(),
@@ -52,7 +58,7 @@ impl Visitor for Interpreter {
         }
     }
 
-    fn visit_var_expr(&self, name: &Token) -> Result<LoxValue, Error> {
+    fn visit_var_expr(&mut self, name: &Token) -> Result<LoxValue, Error> {
         match self.env.get(&name.lexeme) {
             Some(value) => Ok(value.clone()),
             None => Err(Error {

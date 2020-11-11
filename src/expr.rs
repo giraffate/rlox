@@ -52,9 +52,9 @@ impl fmt::Display for Expr {
     }
 }
 
-pub fn walk_expr<V: Visitor + ?Sized>(visitor: &V, expr: &Expr) -> Result<LoxValue, Error> {
+pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<LoxValue, Error> {
     match expr {
-        // Expr::Assign(_, _) => {}
+        Expr::Assign(left, right) => visitor.visit_assign(left, right),
         Expr::Binary(left, op, right) => visitor.visit_binary(left, op, right),
         // Expr::Call(_, _, _) => {}
         // Expr::Get(_, _) => {}

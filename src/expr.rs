@@ -5,7 +5,8 @@ use crate::visitor::Visitor;
 
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Assign(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
@@ -67,7 +68,7 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<Lo
         Expr::Unary(token, expr) => visitor.visit_unary(token, expr),
         Expr::Variable(name) => visitor.visit_var_expr(name),
         _ => Err(Error {
-            kind: "syntax error".to_string(),
+            kind: "runtime error".to_string(),
             msg: "unreachable".to_string(),
         }),
     }

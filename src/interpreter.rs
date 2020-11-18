@@ -2,7 +2,7 @@ use crate::env::Env;
 use crate::error::Error;
 use crate::expr::{walk_expr, Expr};
 use crate::lox_value::LoxValue;
-use crate::stmt::Stmt;
+use crate::stmt::{walk_stmt, Stmt};
 use crate::token::{Literal, Token, TokenType};
 use crate::visitor::Visitor;
 
@@ -12,8 +12,8 @@ pub struct Interpreter {
 
 impl Visitor for Interpreter {
     fn visit_assign(&mut self, left: &Token, right: &Expr) -> Result<LoxValue, Error> {
-        let value = self.visit_expr(right)?;
-        self.env.insert(left.lexeme.clone(), value);
+        let value = walk_expr(self, right)?;
+        self.env.assign(left.lexeme.clone(), value);
         Ok(LoxValue::Nil)
     }
 
@@ -69,22 +69,35 @@ impl Visitor for Interpreter {
     }
 
     fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
-        self.visit_expr(expr)
+        walk_expr(self, expr)
     }
 
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
-        let v = self.visit_expr(expr)?;
+        let v = walk_expr(self, expr)?;
         println!("{}", v);
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_block(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error> {
+        let prev = self.env.clone();
+        let mut child = Env::new();
+        child.enclosing = Some(Box::new(self.env.clone()));
+        self.env = child;
+
+        for stmt in stmts.iter() {
+            walk_stmt(self, stmt)?;
+        }
+        self.env = prev;
         Ok(LoxValue::Nil)
     }
 
     fn visit_var_stmt(&mut self, name: &Token, init: Option<&Expr>) -> Result<LoxValue, Error> {
         let value = if let Some(expr) = init {
-            self.visit_expr(expr)?
+            walk_expr(self, expr)?
         } else {
             LoxValue::Nil
         };
-        self.env.insert(name.lexeme.clone(), value);
+        self.env.define(name.lexeme.clone(), value);
         Ok(LoxValue::Nil)
     }
 }
@@ -98,6 +111,6 @@ impl Interpreter {
     }
 
     fn execute(&mut self, stmt: &Stmt) -> Result<LoxValue, Error> {
-        self.visit_stmt(stmt)
+        walk_stmt(self, stmt)
     }
 }

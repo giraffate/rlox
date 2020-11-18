@@ -4,9 +4,10 @@ use crate::lox_value::LoxValue;
 use crate::token::Token;
 use crate::visitor::Visitor;
 
-#[derive(Debug)]
+#[allow(dead_code)]
+#[derive(Clone, Debug)]
 pub enum Stmt {
-    Block(Vec<Expr>),
+    Block(Vec<Stmt>),
     Class(Token, Expr, Vec<Box<Stmt>>),
     Expr(Expr),
     Func(Token, Vec<Token>, Vec<Box<Stmt>>),
@@ -19,6 +20,7 @@ pub enum Stmt {
 
 pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<LoxValue, Error> {
     match stmt {
+        Stmt::Block(stmts) => visitor.visit_block(stmts.to_vec()),
         Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
         Stmt::Print(expr) => visitor.visit_print(expr),
         Stmt::Var(name, init) => visitor.visit_var_stmt(name, init.as_ref()),

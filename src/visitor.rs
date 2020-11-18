@@ -22,5 +22,6 @@ pub trait Visitor {
 
     fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
+    fn visit_block(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error>;
     fn visit_var_stmt(&mut self, token: &Token, expr: Option<&Expr>) -> Result<LoxValue, Error>;
 }

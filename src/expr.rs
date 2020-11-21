@@ -61,7 +61,7 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<Lo
         // Expr::Get(_, _) => {}
         Expr::Grouping(expr) => visitor.visit_grouping(expr),
         Expr::Literal(lit) => visitor.visit_literal(lit),
-        // Expr::Logical(_, _, _) => {}
+        Expr::Logical(left, op, right) => visitor.visit_logical(left, op, right),
         // Expr::Set(_, _, _) => {}
         // Expr::Super(_, _) => {}
         // Expr::This(_) => {}

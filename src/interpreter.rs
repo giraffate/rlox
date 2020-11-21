@@ -46,6 +46,26 @@ impl Visitor for Interpreter {
         Ok(lit.value())
     }
 
+    fn visit_logical(
+        &mut self,
+        left_expr: &Expr,
+        op: &Token,
+        right_expr: &Expr,
+    ) -> Result<LoxValue, Error> {
+        let left = walk_expr(self, left_expr)?;
+        match op.token_type {
+            TokenType::Or => match left.truthy() {
+                Ok(LoxValue::Bool(true)) => return Ok(left),
+                _ => {}
+            },
+            _ => match left.truthy() {
+                Ok(LoxValue::Bool(false)) => return Ok(left),
+                _ => {}
+            },
+        };
+        walk_expr(self, right_expr)
+    }
+
     fn visit_unary(&mut self, token: &Token, expr: &Expr) -> Result<LoxValue, Error> {
         let right = walk_expr(self, expr)?;
         match token.token_type {
@@ -88,6 +108,23 @@ impl Visitor for Interpreter {
             walk_stmt(self, stmt)?;
         }
         self.env = prev;
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_if(
+        &mut self,
+        cond: &Expr,
+        then_branch: &Stmt,
+        else_branch: Option<&Stmt>,
+    ) -> Result<LoxValue, Error> {
+        let cond_value = walk_expr(self, cond)?;
+        match cond_value {
+            LoxValue::Bool(true) => walk_stmt(self, then_branch)?,
+            _ => match else_branch {
+                Some(else_branch_inside) => walk_stmt(self, else_branch_inside)?,
+                None => LoxValue::Nil,
+            },
+        };
         Ok(LoxValue::Nil)
     }
 

@@ -17,3 +17,6 @@ var c = "global c";
 print a;
 print b;
 print c;
+
+print "hi" or 2;
+print nil or "yes";

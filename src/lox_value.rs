@@ -152,4 +152,11 @@ impl LoxValue {
             }),
         }
     }
+
+    pub fn truthy(&self) -> Result<LoxValue, Error> {
+        match self {
+            LoxValue::Bool(false) | LoxValue::Nil => Ok(LoxValue::Bool(false)),
+            _ => Ok(LoxValue::Bool(true)),
+        }
+    }
 }

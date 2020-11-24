@@ -75,7 +75,7 @@ impl LoxValue {
 
     pub fn divide(&self, v: LoxValue) -> Result<LoxValue, Error> {
         match (self, v) {
-            (LoxValue::Number(_), LoxValue::Number(0f64)) => Err(Error {
+            (LoxValue::Number(_), LoxValue::Number(n)) if n == 0f64 => Err(Error {
                 kind: "runtime error".to_string(),
                 msg: "divided by zero".to_string(),
             }),

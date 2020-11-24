@@ -128,6 +128,13 @@ impl Visitor for Interpreter {
         Ok(LoxValue::Nil)
     }
 
+    fn visit_while(&mut self, cond: &Expr, body: &Stmt) -> Result<LoxValue, Error> {
+        while walk_expr(self, cond)?.truthy()? == LoxValue::Bool(true) {
+            walk_stmt(self, body)?;
+        }
+        Ok(LoxValue::Nil)
+    }
+
     fn visit_var_stmt(&mut self, name: &Token, init: Option<&Expr>) -> Result<LoxValue, Error> {
         let value = if let Some(expr) = init {
             walk_expr(self, expr)?

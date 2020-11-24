@@ -45,6 +45,8 @@ impl Parser {
             self.block_statement()
         } else if self.is_match(vec![TokenType::If]) {
             self.if_statement()
+        } else if self.is_match(vec![TokenType::While]){
+            self.while_statement()
         } else {
             self.expr_statement()
         }
@@ -80,6 +82,14 @@ impl Parser {
             None
         };
         Stmt::If(cond, then_branch, else_branch)
+    }
+
+    fn while_statement(&mut self) -> Stmt {
+        self.consume(TokenType::LeftParen, "Expect '(' after while.".to_string());
+        let cond = self.expression();
+        self.consume(TokenType::RightParen, "Expect ')' after condition.".to_string());
+        let body = self.statement();
+        Stmt::While(cond, Box::new(body))
     }
 
     fn expr_statement(&mut self) -> Stmt {

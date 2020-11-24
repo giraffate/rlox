@@ -29,6 +29,9 @@ pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<Lo
             };
             visitor.visit_if(cond, then_branch, else_branch_converted)
         }
+        Stmt::While(cond, body) => {
+            visitor.visit_while(cond, body)
+        }
         Stmt::Print(expr) => visitor.visit_print(expr),
         Stmt::Var(name, init) => visitor.visit_var_stmt(name, init.as_ref()),
         _ => Err(Error {

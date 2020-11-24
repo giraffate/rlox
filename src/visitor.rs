@@ -30,5 +30,6 @@ pub trait Visitor {
         then_branch: &Stmt,
         else_branch: Option<&Stmt>,
     ) -> Result<LoxValue, Error>;
+    fn visit_while(&mut self, cond: &Expr, body: &Stmt) -> Result<LoxValue, Error>;
     fn visit_var_stmt(&mut self, token: &Token, expr: Option<&Expr>) -> Result<LoxValue, Error>;
 }

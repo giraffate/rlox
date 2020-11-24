@@ -99,7 +99,6 @@ impl Visitor for Interpreter {
     }
 
     fn visit_block(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error> {
-        let prev = self.env.clone();
         let mut child = Env::new();
         child.enclosing = Some(Box::new(self.env.clone()));
         self.env = child;
@@ -107,7 +106,7 @@ impl Visitor for Interpreter {
         for stmt in stmts.iter() {
             walk_stmt(self, stmt)?;
         }
-        self.env = prev;
+        self.env = *(self.env.enclosing.as_ref().unwrap()).clone();
         Ok(LoxValue::Nil)
     }
 

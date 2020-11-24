@@ -47,6 +47,8 @@ impl Parser {
             self.if_statement()
         } else if self.is_match(vec![TokenType::While]){
             self.while_statement()
+        } else if self.is_match(vec![TokenType::For]) {
+            self.for_statement()
         } else {
             self.expr_statement()
         }
@@ -90,6 +92,49 @@ impl Parser {
         self.consume(TokenType::RightParen, "Expect ')' after condition.".to_string());
         let body = self.statement();
         Stmt::While(cond, Box::new(body))
+    }
+
+    fn for_statement(&mut self) -> Stmt {
+        self.consume(TokenType::LeftParen, "Expect '(' after for.".to_string());
+
+        let init = if self.is_match(vec![TokenType::Semicolon]) {
+            None
+        } else if self.is_match(vec![TokenType::Var]) {
+            Some(self.var_declaration())
+        } else {
+            Some(self.expr_statement())
+        };
+
+        let cond = if !self.check(TokenType::Semicolon) {
+            Some(self.expression())
+        } else {
+            None
+        };
+        self.consume(TokenType::Semicolon, "Expect ';' after loop condition.".to_string());
+
+        let inc = if !self.check(TokenType::RightParen) {
+            Some(self.expression())
+        } else {
+            None
+        };
+        self.consume(TokenType::RightParen, "Expect ')' after for clauses.".to_string());
+
+        let mut body = self.statement();
+        if let Some(inc) = inc {
+            body = Stmt::Block(vec![body, Stmt::Expr(inc)]);
+        };
+
+        let mut stmts = Vec::new();
+        if let Some(init) = init {
+            stmts.push(init);
+        };
+        if let Some(cond) = cond {
+            stmts.push(Stmt::While(cond, Box::new(body)));
+        } else {
+            stmts.push(Stmt::While(Expr::Literal(Literal::Bool(true)), Box::new(body)));
+        }
+
+        Stmt::Block(stmts)
     }
 
     fn expr_statement(&mut self) -> Stmt {
@@ -222,7 +267,7 @@ impl Parser {
         } else if self.is_match(vec![TokenType::Identifier]) {
             Expr::Variable(self.previous())
         } else {
-            panic!("not to land here");
+            panic!("{:?} not to land here", self.peek());
         }
     }
 

@@ -43,6 +43,6 @@ fn run(interpreter: &mut Interpreter, s: String) {
     let stmts = parser.parse();
     match interpreter.interpret(stmts) {
         Ok(_) => {}
-        Err(err) => println!("{}", err),
+        Err(err) => println!("{:?}", err),
     }
 }

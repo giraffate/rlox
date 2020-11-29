@@ -92,6 +92,28 @@ impl Visitor for Interpreter {
         walk_expr(self, expr)
     }
 
+    fn visit_call(&mut self, callee: &Expr, paren: &Token, args: Vec<Expr>) -> Result<LoxValue, Error> {
+        let callee = walk_expr(self, callee)?;
+        let args = {
+            let mut v = Vec::new();
+            for arg in args.iter() {
+                let arg = walk_expr(self, arg)?;
+                v.push(arg);
+            }
+            v
+        };
+        // TODO
+        //
+        // if args.len() != callee.arity() {
+        //     Err(Error{
+        //         kind: "runtime error".to_string(),
+        //         msg: format!("wrong number of arguments\nexpected: {}\ngot: {}", callee.arity(), args.len()),
+        //     })
+        // }
+        // callee.call(self, args)
+        Ok(LoxValue::Nil)
+    }
+
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
         let v = walk_expr(self, expr)?;
         println!("{}", v);

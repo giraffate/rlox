@@ -57,7 +57,7 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<Lo
     match expr {
         Expr::Assign(left, right) => visitor.visit_assign(left, right),
         Expr::Binary(left, op, right) => visitor.visit_binary(left, op, right),
-        // Expr::Call(_, _, _) => {}
+        Expr::Call(callee, paren, args) => visitor.visit_call(callee, paren, args.to_vec()),
         // Expr::Get(_, _) => {}
         Expr::Grouping(expr) => visitor.visit_grouping(expr),
         Expr::Literal(lit) => visitor.visit_literal(lit),

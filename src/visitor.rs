@@ -16,6 +16,7 @@ pub trait Visitor {
     fn visit_logical(&mut self, left: &Expr, op: &Token, right: &Expr) -> Result<LoxValue, Error>;
     fn visit_unary(&mut self, token: &Token, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_var_expr(&mut self, expr: &Token) -> Result<LoxValue, Error>;
+    fn visit_call(&mut self, callee: &Expr, paren: &Token, args: Vec<Expr>) -> Result<LoxValue, Error>;
 
     fn visit_stmt(&mut self, stmt: &Stmt) -> Result<LoxValue, Error> {
         walk_stmt(self, stmt)

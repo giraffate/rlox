@@ -1,8 +1,10 @@
-use crate::error::Error;
-use crate::lox_value::LoxValue;
-use crate::visitor::Visitor;
+use std::fmt::Debug;
 
-pub trait Callble {
+use crate::error::Error;
+use crate::interpreter::Interpreter;
+use crate::lox_value::LoxValue;
+
+pub trait Callble: Debug {
     fn arity(&self) -> usize;
-    fn call<V: Visitor + ?Sized>(&mut self, visitor: &mut V, args: Vec<LoxValue>) -> Result<LoxValue, Error>;
+    fn call(&self, interpreter: &mut Interpreter, args: Vec<LoxValue>) -> Result<LoxValue, Error>;
 }

@@ -4,6 +4,7 @@ mod error;
 mod expr;
 mod interpreter;
 mod lox_value;
+mod native_fn;
 mod parser;
 mod rlox;
 mod scanner;

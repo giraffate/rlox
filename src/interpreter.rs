@@ -1,7 +1,10 @@
+use std::rc::Rc;
+
 use crate::env::Env;
 use crate::error::Error;
 use crate::expr::{walk_expr, Expr};
 use crate::lox_value::LoxValue;
+use crate::native_fn::ClockFn;
 use crate::stmt::{walk_stmt, Stmt};
 use crate::token::{Literal, Token, TokenType};
 use crate::visitor::Visitor;
@@ -92,7 +95,12 @@ impl Visitor for Interpreter {
         walk_expr(self, expr)
     }
 
-    fn visit_call(&mut self, callee: &Expr, paren: &Token, args: Vec<Expr>) -> Result<LoxValue, Error> {
+    fn visit_call(
+        &mut self,
+        callee: &Expr,
+        _paren: &Token,
+        args: Vec<Expr>,
+    ) -> Result<LoxValue, Error> {
         let callee = walk_expr(self, callee)?;
         let args = {
             let mut v = Vec::new();
@@ -102,16 +110,25 @@ impl Visitor for Interpreter {
             }
             v
         };
-        // TODO
-        //
-        // if args.len() != callee.arity() {
-        //     Err(Error{
-        //         kind: "runtime error".to_string(),
-        //         msg: format!("wrong number of arguments\nexpected: {}\ngot: {}", callee.arity(), args.len()),
-        //     })
-        // }
-        // callee.call(self, args)
-        Ok(LoxValue::Nil)
+        match callee {
+            LoxValue::Fn(callee) => {
+                if args.len() != callee.arity() {
+                    return Err(Error {
+                        kind: "runtime error".to_string(),
+                        msg: format!(
+                            "wrong number of arguments\nexpected: {}\ngot: {}",
+                            callee.arity(),
+                            args.len()
+                        ),
+                    });
+                }
+                callee.call(self, args)
+            }
+            _ => Err(Error {
+                kind: "runtime error".to_string(),
+                msg: "couldn't find the function".to_string(),
+            }),
+        }
     }
 
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
@@ -168,6 +185,14 @@ impl Visitor for Interpreter {
 }
 
 impl Interpreter {
+    pub fn new() -> Interpreter {
+        let mut globals = Env::new();
+
+        let clock_fn = ClockFn {};
+        globals.define("clock".to_string(), LoxValue::Fn(Rc::new(clock_fn)));
+        Interpreter { env: globals }
+    }
+
     pub fn interpret(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error> {
         for stmt in stmts.iter() {
             self.execute(stmt)?;

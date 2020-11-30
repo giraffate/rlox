@@ -1,13 +1,32 @@
+use std::cmp::PartialEq;
 use std::fmt;
+use std::rc::Rc;
+use std::time::SystemTime;
 
+use crate::callable::Callble;
 use crate::error::Error;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum LoxValue {
     Number(f64),
     Str(String),
     Bool(bool),
+    Time(SystemTime),
+    Fn(Rc<dyn Callble>),
     Nil,
+}
+
+impl PartialEq for LoxValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (LoxValue::Number(l), LoxValue::Number(r)) => *l == *r,
+            (LoxValue::Str(l), LoxValue::Str(r)) => *l == *r,
+            (LoxValue::Bool(l), LoxValue::Bool(r)) => *l == *r,
+            (LoxValue::Nil, LoxValue::Nil) => true,
+            (LoxValue::Time(l), LoxValue::Time(r)) => *l == *r,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for LoxValue {
@@ -17,6 +36,8 @@ impl fmt::Display for LoxValue {
             LoxValue::Str(s) => write!(f, "{}", s),
             LoxValue::Bool(b) => write!(f, "{}", b),
             LoxValue::Nil => write!(f, "nil"),
+            LoxValue::Time(t) => write!(f, "{:?}", t),
+            LoxValue::Fn(callable) => write!(f, "{:?}", callable),
         }
     }
 }

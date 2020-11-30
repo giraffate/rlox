@@ -45,7 +45,7 @@ impl Parser {
             self.block_statement()
         } else if self.is_match(vec![TokenType::If]) {
             self.if_statement()
-        } else if self.is_match(vec![TokenType::While]){
+        } else if self.is_match(vec![TokenType::While]) {
             self.while_statement()
         } else if self.is_match(vec![TokenType::For]) {
             self.for_statement()
@@ -89,7 +89,10 @@ impl Parser {
     fn while_statement(&mut self) -> Stmt {
         self.consume(TokenType::LeftParen, "Expect '(' after while.".to_string());
         let cond = self.expression();
-        self.consume(TokenType::RightParen, "Expect ')' after condition.".to_string());
+        self.consume(
+            TokenType::RightParen,
+            "Expect ')' after condition.".to_string(),
+        );
         let body = self.statement();
         Stmt::While(cond, Box::new(body))
     }
@@ -110,14 +113,20 @@ impl Parser {
         } else {
             None
         };
-        self.consume(TokenType::Semicolon, "Expect ';' after loop condition.".to_string());
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after loop condition.".to_string(),
+        );
 
         let inc = if !self.check(TokenType::RightParen) {
             Some(self.expression())
         } else {
             None
         };
-        self.consume(TokenType::RightParen, "Expect ')' after for clauses.".to_string());
+        self.consume(
+            TokenType::RightParen,
+            "Expect ')' after for clauses.".to_string(),
+        );
 
         let mut body = self.statement();
         if let Some(inc) = inc {
@@ -131,7 +140,10 @@ impl Parser {
         if let Some(cond) = cond {
             stmts.push(Stmt::While(cond, Box::new(body)));
         } else {
-            stmts.push(Stmt::While(Expr::Literal(Literal::Bool(true)), Box::new(body)));
+            stmts.push(Stmt::While(
+                Expr::Literal(Literal::Bool(true)),
+                Box::new(body),
+            ));
         }
 
         Stmt::Block(stmts)
@@ -273,7 +285,10 @@ impl Parser {
                 }
             }
         }
-        let paren = self.consume(TokenType::RightParen, "Expect ')' after arguments.".to_string());
+        let paren = self.consume(
+            TokenType::RightParen,
+            "Expect ')' after arguments.".to_string(),
+        );
         Expr::Call(Box::new(callee), paren, args)
     }
 

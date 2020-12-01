@@ -10,7 +10,7 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     Class(Token, Expr, Vec<Box<Stmt>>),
     Expr(Expr),
-    Func(Token, Vec<Token>, Vec<Box<Stmt>>),
+    Func(Token, Vec<Token>, Box<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
     Return(Token, Expr),

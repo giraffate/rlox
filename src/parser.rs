@@ -19,9 +19,34 @@ impl Parser {
     fn declaration(&mut self) -> Stmt {
         if self.is_match(vec![TokenType::Var]) {
             self.var_declaration()
+        } else if self.is_match(vec![TokenType::Fun]) {
+            self.function("function".to_string())
         } else {
             self.statement()
         }
+    }
+
+    fn function(&mut self, kind: String) -> Stmt {
+        let name = self.consume(TokenType::Identifier, format!("expect {} name", kind));
+        self.consume(TokenType::LeftParen, format!("expect '(' after {} name", kind));
+        let mut args = Vec::new();
+        if !self.check(TokenType::RightParen) {
+            loop {
+                if args.len() >= 255 {
+                    panic!("arguments too long!");
+                }
+
+                args.push(self.consume(TokenType::Identifier, "expect arguments name".to_string()));
+
+                if !self.is_match(vec![TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+        self.consume(TokenType::RightParen, "expect ')' after arguments".to_string());
+
+        let body = self.block_statement();
+        Stmt::Func(name, args, Box::new(body))
     }
 
     fn var_declaration(&mut self) -> Stmt {

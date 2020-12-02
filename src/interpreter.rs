@@ -8,6 +8,7 @@ use crate::native_fn::ClockFn;
 use crate::stmt::{walk_stmt, Stmt};
 use crate::token::{Literal, Token, TokenType};
 use crate::visitor::Visitor;
+use crate::lox_function::LoxFunction;
 
 pub struct Interpreter {
     pub env: Env,
@@ -146,6 +147,12 @@ impl Visitor for Interpreter {
             walk_stmt(self, stmt)?;
         }
         self.env = *(self.env.enclosing.as_ref().unwrap()).clone();
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_func(&mut self, name: &Token, args: Vec<Token>, body: &Stmt) -> Result<LoxValue, Error> {
+        let function = LoxFunction { name: name.clone(), args, body: body.clone() };
+        self.env.define(name.lexeme.clone(), LoxValue::Fn(Rc::new(function)));
         Ok(LoxValue::Nil)
     }
 

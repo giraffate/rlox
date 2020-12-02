@@ -22,6 +22,7 @@ pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<Lo
     match stmt {
         Stmt::Block(stmts) => visitor.visit_block(stmts.to_vec()),
         Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
+        Stmt::Func(name, args, body) => visitor.visit_func(name, args.to_vec(), body),
         Stmt::If(cond, then_branch, else_branch) => {
             let else_branch_converted = match else_branch {
                 Some(b) => Some(&**b),

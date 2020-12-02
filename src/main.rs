@@ -2,6 +2,7 @@ mod callable;
 mod env;
 mod error;
 mod expr;
+mod lox_function;
 mod interpreter;
 mod lox_value;
 mod native_fn;

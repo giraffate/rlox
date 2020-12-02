@@ -45,6 +45,7 @@ impl Parser {
         }
         self.consume(TokenType::RightParen, "expect ')' after arguments".to_string());
 
+        self.consume(TokenType::LeftBrace, "Expect '{' before body.".to_string());
         let body = self.block_statement();
         Stmt::Func(name, args, Box::new(body))
     }

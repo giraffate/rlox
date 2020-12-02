@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use crate::callable::Callble;
+use crate::callable::Callable;
 use crate::error::Error;
 use crate::interpreter::Interpreter;
 use crate::lox_value::LoxValue;
@@ -8,7 +8,7 @@ use crate::lox_value::LoxValue;
 #[derive(Clone, Debug)]
 pub struct ClockFn;
 
-impl Callble for ClockFn {
+impl Callable for ClockFn {
     fn arity(&self) -> usize {
         0
     }

@@ -3,7 +3,7 @@ use std::fmt;
 use std::rc::Rc;
 use std::time::SystemTime;
 
-use crate::callable::Callble;
+use crate::callable::Callable;
 use crate::error::Error;
 
 #[derive(Clone, Debug)]
@@ -12,7 +12,7 @@ pub enum LoxValue {
     Str(String),
     Bool(bool),
     Time(SystemTime),
-    Fn(Rc<dyn Callble>),
+    Fn(Rc<dyn Callable>),
     Nil,
 }
 

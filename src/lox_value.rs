@@ -13,6 +13,7 @@ pub enum LoxValue {
     Bool(bool),
     Time(SystemTime),
     Fn(Rc<dyn Callable>),
+    Return(Box<LoxValue>),
     Nil,
 }
 
@@ -38,6 +39,7 @@ impl fmt::Display for LoxValue {
             LoxValue::Nil => write!(f, "nil"),
             LoxValue::Time(t) => write!(f, "{:?}", t),
             LoxValue::Fn(callable) => write!(f, "{:?}", callable),
+            LoxValue::Return(value) => write!(f, "{:?}", value),
         }
     }
 }

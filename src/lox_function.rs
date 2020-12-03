@@ -30,6 +30,9 @@ impl Callable for LoxFunction {
         let ret = walk_stmt(interpreter, &self.body);
         interpreter.env = *(interpreter.env.enclosing.as_ref().unwrap()).clone();
 
-        ret
+        match ret {
+            Ok(LoxValue::Return(value)) => Ok(*value),
+            _ => ret,
+        }
     }
 }

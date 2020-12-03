@@ -13,7 +13,7 @@ pub enum Stmt {
     Func(Token, Vec<Token>, Box<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
-    Return(Token, Expr),
+    Return(Token, Option<Expr>),
     Var(Token, Option<Expr>),
     While(Expr, Box<Stmt>),
 }
@@ -32,6 +32,7 @@ pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<Lo
         }
         Stmt::While(cond, body) => visitor.visit_while(cond, body),
         Stmt::Print(expr) => visitor.visit_print(expr),
+        Stmt::Return(keyword, value) => visitor.visit_return(keyword, value.as_ref()),
         Stmt::Var(name, init) => visitor.visit_var_stmt(name, init.as_ref()),
         _ => Err(Error {
             kind: "runtime error".to_string(),

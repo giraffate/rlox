@@ -92,10 +92,6 @@ impl Visitor for Interpreter {
         }
     }
 
-    fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
-        walk_expr(self, expr)
-    }
-
     fn visit_call(
         &mut self,
         callee: &Expr,
@@ -132,6 +128,10 @@ impl Visitor for Interpreter {
         }
     }
 
+    fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
+        walk_expr(self, expr)
+    }
+
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
         let v = walk_expr(self, expr)?;
         println!("{}", v);
@@ -143,17 +143,37 @@ impl Visitor for Interpreter {
         child.enclosing = Some(Box::new(self.env.clone()));
         self.env = child;
 
+        let mut return_value = None;
         for stmt in stmts.iter() {
-            walk_stmt(self, stmt)?;
+            let value = walk_stmt(self, stmt)?;
+            match value {
+                LoxValue::Return(_) => {
+                    return_value = Some(value);
+                    break;
+                },
+                _ => {}
+            }
         }
         self.env = *(self.env.enclosing.as_ref().unwrap()).clone();
-        Ok(LoxValue::Nil)
+
+        match return_value {
+            Some(return_value ) => Ok(return_value),
+            _ => Ok(LoxValue::Nil),
+        }
     }
 
     fn visit_func(&mut self, name: &Token, args: Vec<Token>, body: &Stmt) -> Result<LoxValue, Error> {
         let function = LoxFunction { name: name.clone(), args, body: body.clone() };
         self.env.define(name.lexeme.clone(), LoxValue::Fn(Rc::new(function)));
         Ok(LoxValue::Nil)
+    }
+
+    fn visit_return(&mut self, _token: &Token, value: Option<&Expr>) -> Result<LoxValue, Error> {
+        let return_value = match value {
+            Some(value) => walk_expr(self, value)?,
+            None => return Ok(LoxValue::Nil),
+        };
+        Ok(LoxValue::Return(Box::new(return_value)))
     }
 
     fn visit_if(
@@ -164,20 +184,31 @@ impl Visitor for Interpreter {
     ) -> Result<LoxValue, Error> {
         let cond_value = walk_expr(self, cond)?;
         match cond_value {
-            LoxValue::Bool(true) => walk_stmt(self, then_branch)?,
+            LoxValue::Bool(true) => walk_stmt(self, then_branch),
             _ => match else_branch {
-                Some(else_branch_inside) => walk_stmt(self, else_branch_inside)?,
-                None => LoxValue::Nil,
+                Some(else_branch_inside) => walk_stmt(self, else_branch_inside),
+                None => Ok(LoxValue::Nil),
             },
-        };
-        Ok(LoxValue::Nil)
+        }
     }
 
     fn visit_while(&mut self, cond: &Expr, body: &Stmt) -> Result<LoxValue, Error> {
+        let mut return_value  = None;
         while walk_expr(self, cond)?.truthy()? == LoxValue::Bool(true) {
-            walk_stmt(self, body)?;
+            let value = walk_stmt(self, body)?;
+            match value {
+                LoxValue::Return(_) => {
+                    return_value = Some(value);
+                    break;
+                },
+                _ => {}
+            }
         }
-        Ok(LoxValue::Nil)
+
+        match return_value {
+            Some(return_value ) => Ok(return_value),
+            _ => Ok(LoxValue::Nil),
+        }
     }
 
     fn visit_var_stmt(&mut self, name: &Token, init: Option<&Expr>) -> Result<LoxValue, Error> {

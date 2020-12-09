@@ -1,23 +1,24 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::env::Env;
 use crate::error::Error;
 use crate::expr::{walk_expr, Expr};
+use crate::lox_function::LoxFunction;
 use crate::lox_value::LoxValue;
 use crate::native_fn::ClockFn;
 use crate::stmt::{walk_stmt, Stmt};
 use crate::token::{Literal, Token, TokenType};
 use crate::visitor::Visitor;
-use crate::lox_function::LoxFunction;
 
 pub struct Interpreter {
-    pub env: Env,
+    pub env: Rc<RefCell<Env>>,
 }
 
 impl Visitor for Interpreter {
     fn visit_assign(&mut self, left: &Token, right: &Expr) -> Result<LoxValue, Error> {
         let value = walk_expr(self, right)?;
-        self.env.assign(left.lexeme.clone(), value);
+        self.env.borrow_mut().assign(left.lexeme.clone(), value);
         Ok(LoxValue::Nil)
     }
 
@@ -83,7 +84,7 @@ impl Visitor for Interpreter {
     }
 
     fn visit_var_expr(&mut self, name: &Token) -> Result<LoxValue, Error> {
-        match self.env.get(&name.lexeme) {
+        match self.env.borrow().get(&name.lexeme) {
             Some(value) => Ok(value.clone()),
             None => Err(Error {
                 kind: "runtime error".to_string(),
@@ -140,8 +141,9 @@ impl Visitor for Interpreter {
 
     fn visit_block(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error> {
         let mut child = Env::new();
-        child.enclosing = Some(Box::new(self.env.clone()));
-        self.env = child;
+        let parent = self.env.clone();
+        child.enclosing = Some(parent.clone());
+        self.env = Rc::new(RefCell::new(child));
 
         let mut return_value = None;
         for stmt in stmts.iter() {
@@ -150,21 +152,33 @@ impl Visitor for Interpreter {
                 LoxValue::Return(_) => {
                     return_value = Some(value);
                     break;
-                },
+                }
                 _ => {}
             }
         }
-        self.env = *(self.env.enclosing.as_ref().unwrap()).clone();
+        self.env = parent;
 
         match return_value {
-            Some(return_value ) => Ok(return_value),
+            Some(return_value) => Ok(return_value),
             _ => Ok(LoxValue::Nil),
         }
     }
 
-    fn visit_func(&mut self, name: &Token, args: Vec<Token>, body: &Stmt) -> Result<LoxValue, Error> {
-        let function = LoxFunction { name: name.clone(), args, body: body.clone() };
-        self.env.define(name.lexeme.clone(), LoxValue::Fn(Rc::new(function)));
+    fn visit_func(
+        &mut self,
+        name: &Token,
+        args: Vec<Token>,
+        body: &Stmt,
+    ) -> Result<LoxValue, Error> {
+        let function = LoxFunction {
+            name: name.clone(),
+            args,
+            body: body.clone(),
+            closure: self.env.clone(),
+        };
+        self.env
+            .borrow_mut()
+            .define(name.lexeme.clone(), LoxValue::Fn(Rc::new(function)));
         Ok(LoxValue::Nil)
     }
 
@@ -193,20 +207,20 @@ impl Visitor for Interpreter {
     }
 
     fn visit_while(&mut self, cond: &Expr, body: &Stmt) -> Result<LoxValue, Error> {
-        let mut return_value  = None;
+        let mut return_value = None;
         while walk_expr(self, cond)?.truthy()? == LoxValue::Bool(true) {
             let value = walk_stmt(self, body)?;
             match value {
                 LoxValue::Return(_) => {
                     return_value = Some(value);
                     break;
-                },
+                }
                 _ => {}
             }
         }
 
         match return_value {
-            Some(return_value ) => Ok(return_value),
+            Some(return_value) => Ok(return_value),
             _ => Ok(LoxValue::Nil),
         }
     }
@@ -217,7 +231,7 @@ impl Visitor for Interpreter {
         } else {
             LoxValue::Nil
         };
-        self.env.define(name.lexeme.clone(), value);
+        self.env.borrow_mut().define(name.lexeme.clone(), value);
         Ok(LoxValue::Nil)
     }
 }
@@ -228,7 +242,9 @@ impl Interpreter {
 
         let clock_fn = ClockFn {};
         globals.define("clock".to_string(), LoxValue::Fn(Rc::new(clock_fn)));
-        Interpreter { env: globals }
+        Interpreter {
+            env: Rc::new(RefCell::new(globals)),
+        }
     }
 
     pub fn interpret(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error> {

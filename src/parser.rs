@@ -28,7 +28,10 @@ impl Parser {
 
     fn function(&mut self, kind: String) -> Stmt {
         let name = self.consume(TokenType::Identifier, format!("expect {} name", kind));
-        self.consume(TokenType::LeftParen, format!("expect '(' after {} name", kind));
+        self.consume(
+            TokenType::LeftParen,
+            format!("expect '(' after {} name", kind),
+        );
         let mut args = Vec::new();
         if !self.check(TokenType::RightParen) {
             loop {
@@ -43,7 +46,10 @@ impl Parser {
                 }
             }
         }
-        self.consume(TokenType::RightParen, "expect ')' after arguments".to_string());
+        self.consume(
+            TokenType::RightParen,
+            "expect ')' after arguments".to_string(),
+        );
 
         self.consume(TokenType::LeftBrace, "Expect '{' before body.".to_string());
         let body = self.block_statement();
@@ -77,7 +83,7 @@ impl Parser {
             self.for_statement()
         } else if self.is_match(vec![TokenType::Return]) {
             self.return_statement()
-        }else {
+        } else {
             self.expr_statement()
         }
     }
@@ -95,7 +101,10 @@ impl Parser {
         } else {
             None
         };
-        self.consume(TokenType::Semicolon, "Expect ';' after return value.".to_string());
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after return value.".to_string(),
+        );
         Stmt::Return(keyword, value)
     }
 

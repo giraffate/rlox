@@ -1,11 +1,13 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::lox_value::LoxValue;
 
 #[derive(Clone, Debug)]
 pub struct Env {
     values: HashMap<String, LoxValue>,
-    pub enclosing: Option<Box<Env>>,
+    pub enclosing: Option<Rc<RefCell<Env>>>,
 }
 
 impl Env {
@@ -25,17 +27,17 @@ impl Env {
             self.values.insert(k, v)
         } else {
             match self.enclosing {
-                Some(ref mut parent) => parent.assign(k, v),
+                Some(ref mut parent) => parent.borrow_mut().assign(k, v),
                 None => None,
             }
         }
     }
 
-    pub fn get(&self, k: &String) -> Option<&LoxValue> {
+    pub fn get(&self, k: &String) -> Option<LoxValue> {
         match self.values.get(k) {
-            Some(v) => Some(v),
+            Some(v) => Some(v.clone()),
             None => match &self.enclosing {
-                Some(parent) => parent.get(k),
+                Some(parent) => parent.borrow().get(k),
                 None => None,
             },
         }

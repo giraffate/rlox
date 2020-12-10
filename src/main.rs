@@ -7,6 +7,7 @@ mod lox_function;
 mod lox_value;
 mod native_fn;
 mod parser;
+mod resolver;
 mod rlox;
 mod scanner;
 mod stmt;

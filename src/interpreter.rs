@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use crate::env::Env;
@@ -16,9 +16,21 @@ pub struct Interpreter {
 }
 
 impl Visitor for Interpreter {
-    fn visit_assign(&mut self, left: &Token, right: &Expr) -> Result<LoxValue, Error> {
+    fn visit_assign(
+        &mut self,
+        left: &Token,
+        right: &Expr,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error> {
         let value = walk_expr(self, right)?;
-        self.env.borrow_mut().assign(left.lexeme.clone(), value);
+        let distance = distance.get();
+        if distance < 0 {
+            self.env.borrow_mut().assign(left.lexeme.clone(), value);
+        } else {
+            self.env
+                .borrow_mut()
+                .assign_at(distance, left.lexeme.clone(), value);
+        }
         Ok(LoxValue::Nil)
     }
 
@@ -83,14 +95,12 @@ impl Visitor for Interpreter {
         }
     }
 
-    fn visit_var_expr(&mut self, name: &Token) -> Result<LoxValue, Error> {
-        match self.env.borrow().get(&name.lexeme) {
-            Some(value) => Ok(value.clone()),
-            None => Err(Error {
-                kind: "runtime error".to_string(),
-                msg: format!("{} is not initialized", name.lexeme),
-            }),
-        }
+    fn visit_var_expr(
+        &mut self,
+        token: &Token,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error> {
+        self.lookup_variable(token, distance.get())
     }
 
     fn visit_call(
@@ -256,5 +266,25 @@ impl Interpreter {
 
     fn execute(&mut self, stmt: &Stmt) -> Result<LoxValue, Error> {
         walk_stmt(self, stmt)
+    }
+
+    fn lookup_variable(&mut self, token: &Token, distance: i32) -> Result<LoxValue, Error> {
+        if distance < 0 {
+            match self.env.borrow().get(&token.lexeme) {
+                Some(value) => Ok(value.clone()),
+                None => Err(Error {
+                    kind: "runtime error".to_string(),
+                    msg: format!("{} is not initialized", token.lexeme),
+                }),
+            }
+        } else {
+            match self.env.borrow().get_at(token.lexeme.clone(), distance) {
+                Some(value) => Ok(value.clone()),
+                None => Err(Error {
+                    kind: "runtime error".to_string(),
+                    msg: format!("{} is not initialized", token.lexeme),
+                }),
+            }
+        }
     }
 }

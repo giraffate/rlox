@@ -4,18 +4,27 @@ use crate::lox_value::LoxValue;
 use crate::stmt::{walk_stmt, Stmt};
 use crate::token::{Literal, Token};
 
+use std::cell::Cell;
+use std::rc::Rc;
+
 pub trait Visitor {
     fn visit_expr(&mut self, expr: &Expr) -> Result<LoxValue, Error> {
         walk_expr(self, expr)
     }
 
-    fn visit_assign(&mut self, left: &Token, right: &Expr) -> Result<LoxValue, Error>;
+    fn visit_assign(
+        &mut self,
+        left: &Token,
+        right: &Expr,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error>;
     fn visit_binary(&mut self, left: &Expr, op: &Token, right: &Expr) -> Result<LoxValue, Error>;
     fn visit_grouping(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_literal(&mut self, lit: &Literal) -> Result<LoxValue, Error>;
     fn visit_logical(&mut self, left: &Expr, op: &Token, right: &Expr) -> Result<LoxValue, Error>;
     fn visit_unary(&mut self, token: &Token, expr: &Expr) -> Result<LoxValue, Error>;
-    fn visit_var_expr(&mut self, expr: &Token) -> Result<LoxValue, Error>;
+    fn visit_var_expr(&mut self, token: &Token, distance: Rc<Cell<i32>>)
+        -> Result<LoxValue, Error>;
     fn visit_call(
         &mut self,
         callee: &Expr,

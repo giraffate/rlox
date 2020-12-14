@@ -2,6 +2,9 @@ use crate::expr::Expr;
 use crate::stmt::Stmt;
 use crate::token::{Literal, Token, TokenType};
 
+use std::cell::Cell;
+use std::rc::Rc;
+
 pub struct Parser {
     pub tokens: Vec<Token>,
     pub current: usize,
@@ -213,7 +216,9 @@ impl Parser {
         if self.is_match(vec![TokenType::Equal]) {
             let value = self.assignment();
             expr = match expr {
-                Expr::Variable(token) => Expr::Assign(token, Box::new(value)),
+                Expr::Variable(token, _) => {
+                    Expr::Assign(token, Box::new(value), Rc::new(Cell::new(-1)))
+                }
                 _ => panic!("invalid assignment target"),
             }
         }
@@ -357,7 +362,7 @@ impl Parser {
             );
             Expr::Grouping(Box::new(expr))
         } else if self.is_match(vec![TokenType::Identifier]) {
-            Expr::Variable(self.previous())
+            Expr::Variable(self.previous(), Rc::new(Cell::new(-1)))
         } else {
             panic!("{:?} not to land here", self.peek());
         }

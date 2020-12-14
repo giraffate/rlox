@@ -23,9 +23,11 @@ impl Callable for LoxFunction {
     }
 
     fn call(&self, interpreter: &mut Interpreter, args: Vec<LoxValue>) -> Result<LoxValue, Error> {
-        let closure = self.closure.clone();
+        let mut closure = Env::new();
+        closure.enclosing = Some(self.closure.clone());
+        let closure = Rc::new(RefCell::new(closure));
         let env = interpreter.env.clone();
-        closure.borrow_mut().enclosing = Some(env.clone());
+        // closure.borrow_mut().enclosing = Some(env.clone());
 
         for i in 0..self.args.len() {
             closure

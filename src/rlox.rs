@@ -4,6 +4,7 @@ use std::io::stdin;
 
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
+use crate::resolver::Resolver;
 use crate::scanner::Scanner;
 
 pub fn run_file(path: String) -> Result<()> {
@@ -40,6 +41,8 @@ fn run(interpreter: &mut Interpreter, s: String) {
         current: 0,
     };
     let stmts = parser.parse();
+    let mut resolver = Resolver::new();
+    resolver.resolve_stmts(stmts.clone());
     match interpreter.interpret(stmts) {
         Ok(_) => {}
         Err(err) => println!("{:?}", err),

@@ -1,19 +1,23 @@
+use std::cell::Cell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use crate::error::Error;
 use crate::expr::{walk_expr, Expr};
-use crate::interpreter::Interpreter;
 use crate::lox_value::LoxValue;
 use crate::stmt::{walk_stmt, Stmt};
 use crate::token::Token;
 use crate::visitor::Visitor;
 
 pub struct Resolver {
-    interpreter: Interpreter,
     scopes: Vec<HashMap<String, bool>>,
 }
 
 impl Resolver {
+    pub fn new() -> Resolver {
+        Resolver { scopes: Vec::new() }
+    }
+
     pub fn resolve_stmts(&mut self, stmts: Vec<Stmt>) {
         for stmt in stmts.iter() {
             self.resolve_stmt(stmt);
@@ -28,11 +32,10 @@ impl Resolver {
         walk_expr(self, expr);
     }
 
-    fn resolve_local(&mut self, expr: &Expr, name: &Token) {
-        for scope in self.scopes.iter().rev() {
+    fn resolve_local(&mut self, distance: Rc<Cell<i32>>, name: &Token) {
+        for (i, scope) in self.scopes.iter().rev().enumerate() {
             if scope.contains_key(&name.lexeme) {
-                // TODO
-                // interpreter.resolve
+                distance.set(i as i32);
                 return;
             }
         }
@@ -57,23 +60,15 @@ impl Resolver {
     }
 
     pub fn declare(&mut self, name: &Token) {
-        if self.scopes.is_empty() {
-            return;
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name.lexeme.clone(), false);
         }
-
-        let mut scope = self.scopes.pop().unwrap();
-        scope.insert(name.lexeme.clone(), false);
-        self.scopes.push(scope);
     }
 
     pub fn define(&mut self, name: &Token) {
-        if self.scopes.is_empty() {
-            return;
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name.lexeme.clone(), false);
         }
-
-        let mut scope = self.scopes.pop().unwrap();
-        scope.insert(name.lexeme.clone(), true);
-        self.scopes.push(scope);
     }
 }
 
@@ -94,20 +89,35 @@ impl Visitor for Resolver {
         Ok(LoxValue::Nil)
     }
 
-    fn visit_var_expr(&mut self, expr: &Token) -> Result<LoxValue, Error> {
-        if !self.scopes.is_empty() && !self.scopes[self.scopes.len()].get(&expr.lexeme).unwrap() {
-            return Err(Error {
-                kind: "resolved error".to_string(),
-                msg: "can't read local variable in its own initializer".to_string(),
-            });
+    fn visit_var_expr(
+        &mut self,
+        token: &Token,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error> {
+        if !self.scopes.is_empty() {
+            if let Some(scope) = self.scopes.last() {
+                if let Some(available) = scope.get(&token.lexeme) {
+                    if !available {
+                        return Err(Error {
+                            kind: "resolved error".to_string(),
+                            msg: "can't read local variable in its own initializer".to_string(),
+                        });
+                    }
+                }
+            }
         }
-
+        self.resolve_local(distance, token);
         Ok(LoxValue::Nil)
     }
 
-    fn visit_assign(&mut self, left: &Token, right: &Expr) -> Result<LoxValue, Error> {
+    fn visit_assign(
+        &mut self,
+        left: &Token,
+        right: &Expr,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error> {
         self.resolve_expr(right);
-        self.resolve_local(&Expr::Assign(left.clone(), Box::new(right.clone())), left);
+        self.resolve_local(distance, left);
         Ok(LoxValue::Nil)
     }
 

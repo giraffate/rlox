@@ -3,12 +3,14 @@ use crate::lox_value::LoxValue;
 use crate::token::{Literal, Token};
 use crate::visitor::Visitor;
 
+use std::cell::Cell;
 use std::fmt;
+use std::rc::Rc;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
-    Assign(Token, Box<Expr>),
+    Assign(Token, Box<Expr>, Rc<Cell<i32>>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Call(Box<Expr>, Token, Vec<Expr>),
     Get(Box<Expr>, Token),
@@ -19,13 +21,13 @@ pub enum Expr {
     Super(Token, Token),
     This(Token),
     Unary(Token, Box<Expr>),
-    Variable(Token),
+    Variable(Token, Rc<Cell<i32>>),
 }
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expr::Assign(token, expr) => write!(f, "assign: ({}, {})", token.lexeme, expr),
+            Expr::Assign(token, expr, _) => write!(f, "assign: ({}, {})", token.lexeme, expr),
             Expr::Binary(left_expr, token, right_expr) => {
                 write!(f, "binary: ({} {} {}", left_expr, token.lexeme, right_expr)
             }
@@ -48,14 +50,14 @@ impl fmt::Display for Expr {
             }
             Expr::This(token) => write!(f, "this: ({})", token.lexeme),
             Expr::Unary(token, expr) => write!(f, "unary: ({} {})", token.lexeme, expr),
-            Expr::Variable(token) => write!(f, "variable: ({})", token.lexeme),
+            Expr::Variable(token, _) => write!(f, "variable: ({})", token.lexeme),
         }
     }
 }
 
 pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<LoxValue, Error> {
     match expr {
-        Expr::Assign(left, right) => visitor.visit_assign(left, right),
+        Expr::Assign(left, right, distance) => visitor.visit_assign(left, right, distance.clone()),
         Expr::Binary(left, op, right) => visitor.visit_binary(left, op, right),
         Expr::Call(callee, paren, args) => visitor.visit_call(callee, paren, args.to_vec()),
         // Expr::Get(_, _) => {}
@@ -66,7 +68,7 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<Lo
         // Expr::Super(_, _) => {}
         // Expr::This(_) => {}
         Expr::Unary(token, expr) => visitor.visit_unary(token, expr),
-        Expr::Variable(name) => visitor.visit_var_expr(name),
+        Expr::Variable(name, distance) => visitor.visit_var_expr(name, distance.clone()),
         _ => Err(Error {
             kind: "runtime error".to_string(),
             msg: "unreachable".to_string(),

@@ -13,6 +13,7 @@ use crate::visitor::Visitor;
 
 pub struct Interpreter {
     pub env: Rc<RefCell<Env>>,
+    pub globals: Rc<RefCell<Env>>,
 }
 
 impl Visitor for Interpreter {
@@ -25,7 +26,7 @@ impl Visitor for Interpreter {
         let value = walk_expr(self, right)?;
         let distance = distance.get();
         if distance < 0 {
-            self.env.borrow_mut().assign(left.lexeme.clone(), value);
+            self.globals.borrow_mut().assign(left.lexeme.clone(), value);
         } else {
             self.env
                 .borrow_mut()
@@ -124,7 +125,8 @@ impl Visitor for Interpreter {
                     return Err(Error {
                         kind: "runtime error".to_string(),
                         msg: format!(
-                            "wrong number of arguments\nexpected: {}\ngot: {}",
+                            "wrong number of arguments in `{}`\nexpected: {}\ngot: {}",
+                            callee.name(),
                             callee.arity(),
                             args.len()
                         ),
@@ -252,8 +254,10 @@ impl Interpreter {
 
         let clock_fn = ClockFn {};
         globals.define("clock".to_string(), LoxValue::Fn(Rc::new(clock_fn)));
+        let globals = Rc::new(RefCell::new(globals));
         Interpreter {
-            env: Rc::new(RefCell::new(globals)),
+            env: globals.clone(),
+            globals: globals.clone(),
         }
     }
 
@@ -270,7 +274,7 @@ impl Interpreter {
 
     fn lookup_variable(&mut self, token: &Token, distance: i32) -> Result<LoxValue, Error> {
         if distance < 0 {
-            match self.env.borrow().get(&token.lexeme) {
+            match self.globals.borrow().get(&token.lexeme) {
                 Some(value) => Ok(value.clone()),
                 None => Err(Error {
                     kind: "runtime error".to_string(),

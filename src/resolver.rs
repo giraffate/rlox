@@ -67,7 +67,7 @@ impl Resolver {
 
     pub fn define(&mut self, name: &Token) {
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name.lexeme.clone(), false);
+            scope.insert(name.lexeme.clone(), true);
         }
     }
 }
@@ -94,15 +94,13 @@ impl Visitor for Resolver {
         token: &Token,
         distance: Rc<Cell<i32>>,
     ) -> Result<LoxValue, Error> {
-        if !self.scopes.is_empty() {
-            if let Some(scope) = self.scopes.last() {
-                if let Some(available) = scope.get(&token.lexeme) {
-                    if !available {
-                        return Err(Error {
-                            kind: "resolved error".to_string(),
-                            msg: "can't read local variable in its own initializer".to_string(),
-                        });
-                    }
+        if let Some(scope) = self.scopes.last() {
+            if let Some(available) = scope.get(&token.lexeme) {
+                if !available {
+                    return Err(Error {
+                        kind: "resolved error".to_string(),
+                        msg: "can't read local variable in its own initializer".to_string(),
+                    });
                 }
             }
         }

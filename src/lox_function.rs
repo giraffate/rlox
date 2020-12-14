@@ -18,6 +18,10 @@ pub struct LoxFunction {
 }
 
 impl Callable for LoxFunction {
+    fn name(&self) -> String {
+        self.name.lexeme.clone()
+    }
+
     fn arity(&self) -> usize {
         self.args.len()
     }
@@ -27,7 +31,6 @@ impl Callable for LoxFunction {
         closure.enclosing = Some(self.closure.clone());
         let closure = Rc::new(RefCell::new(closure));
         let env = interpreter.env.clone();
-        // closure.borrow_mut().enclosing = Some(env.clone());
 
         for i in 0..self.args.len() {
             closure

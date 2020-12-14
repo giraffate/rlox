@@ -9,6 +9,10 @@ use crate::lox_value::LoxValue;
 pub struct ClockFn;
 
 impl Callable for ClockFn {
+    fn name(&self) -> String {
+        "clock".to_string()
+    }
+
     fn arity(&self) -> usize {
         0
     }

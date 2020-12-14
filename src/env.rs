@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::error::Error;
 use crate::lox_value::LoxValue;
 
 #[derive(Clone, Debug)]
@@ -35,6 +34,10 @@ impl Env {
     }
 
     pub fn assign_at(&mut self, distance: i32, k: String, v: LoxValue) -> Option<LoxValue> {
+        if distance == 0 {
+            return self.assign(k, v);
+        }
+
         let mut ret_env = match self.enclosing.clone() {
             Some(parent_env) => parent_env.clone(),
             _ => return None,
@@ -61,6 +64,10 @@ impl Env {
     }
 
     pub fn get_at(&self, name: String, distance: i32) -> Option<LoxValue> {
+        if distance == 0 {
+            return self.get(&name);
+        }
+
         let mut ret_env = match self.enclosing.clone() {
             Some(parent_env) => parent_env.clone(),
             _ => return None,

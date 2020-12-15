@@ -41,8 +41,16 @@ fn run(interpreter: &mut Interpreter, s: String) {
         current: 0,
     };
     let stmts = parser.parse();
+
     let mut resolver = Resolver::new();
-    resolver.resolve_stmts(stmts.clone());
+    match resolver.resolve_stmts(stmts.clone()) {
+        Ok(_) => {}
+        Err(err) => {
+            println!("{:?}", err);
+            return;
+        }
+    }
+
     match interpreter.interpret(stmts) {
         Ok(_) => {}
         Err(err) => println!("{:?}", err),

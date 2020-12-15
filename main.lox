@@ -74,3 +74,16 @@ var a = "global";
   var a = "block";
   showA(); // "global"
 }
+
+// resolving error test
+//
+// fun bad() {
+//   var a = "first";
+//   var a = "second";
+//   print a;
+// }
+// bad();
+
+// resolving error test
+//
+// return "at top level";

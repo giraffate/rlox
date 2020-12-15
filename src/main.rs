@@ -26,7 +26,6 @@ fn main() -> Result<()> {
         .get_matches();
 
     if let Some(i) = matches.value_of("input") {
-        println!("{}", i);
         run_file(i.to_string())?;
     } else {
         run_prompt()?;

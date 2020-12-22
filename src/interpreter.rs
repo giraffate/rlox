@@ -1,9 +1,11 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+use crate::callable::Callable;
 use crate::env::Env;
 use crate::error::Error;
 use crate::expr::{walk_expr, Expr};
+use crate::lox_class::LoxClass;
 use crate::lox_function::LoxFunction;
 use crate::lox_value::LoxValue;
 use crate::native_fn::ClockFn;
@@ -134,6 +136,7 @@ impl Visitor for Interpreter {
                 }
                 callee.call(self, args)
             }
+            LoxValue::Class(callee) => callee.call(self, args),
             _ => Err(Error {
                 kind: "runtime error".to_string(),
                 msg: "couldn't find the function".to_string(),
@@ -191,6 +194,17 @@ impl Visitor for Interpreter {
         self.env
             .borrow_mut()
             .define(name.lexeme.clone(), LoxValue::Fn(Rc::new(function)));
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_class(&mut self, name: &Token, _methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+        self.env
+            .borrow_mut()
+            .define(name.lexeme.clone(), LoxValue::Nil);
+        let klass = LoxClass::new(name.lexeme.clone());
+        self.env
+            .borrow_mut()
+            .assign(name.lexeme.clone(), LoxValue::Class(Rc::new(klass)));
         Ok(LoxValue::Nil)
     }
 

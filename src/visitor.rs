@@ -36,6 +36,7 @@ pub trait Visitor {
         walk_stmt(self, stmt)
     }
 
+    fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error>;
     fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_block(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error>;

@@ -119,6 +119,12 @@ impl Visitor for Resolver {
         Ok(LoxValue::Nil)
     }
 
+    fn visit_class(&mut self, name: &Token, _methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+        self.declare(name);
+        self.define(name);
+        Ok(LoxValue::Nil)
+    }
+
     fn visit_var_expr(
         &mut self,
         token: &Token,

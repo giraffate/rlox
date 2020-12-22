@@ -24,9 +24,31 @@ impl Parser {
             self.var_declaration()
         } else if self.is_match(vec![TokenType::Fun]) {
             self.function("function".to_string())
+        } else if self.is_match(vec![TokenType::Class]) {
+            self.class_declaration()
         } else {
             self.statement()
         }
+    }
+
+    fn class_declaration(&mut self) -> Stmt {
+        let name = self.consume(TokenType::Identifier, "expect class name".to_string());
+        self.consume(
+            TokenType::LeftBrace,
+            "expect '{' before class body".to_string(),
+        );
+
+        let mut methods = Vec::new();
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            methods.push(self.function("method".to_string()));
+        }
+
+        self.consume(
+            TokenType::RightBrace,
+            "expect '}' after class body".to_string(),
+        );
+
+        Stmt::Class(name, Box::new(methods))
     }
 
     fn function(&mut self, kind: String) -> Stmt {

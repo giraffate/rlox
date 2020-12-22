@@ -5,6 +5,8 @@ use std::time::SystemTime;
 
 use crate::callable::Callable;
 use crate::error::Error;
+use crate::lox_class::LoxClass;
+use crate::lox_instance::LoxInstance;
 
 #[derive(Clone, Debug)]
 pub enum LoxValue {
@@ -13,6 +15,8 @@ pub enum LoxValue {
     Bool(bool),
     Time(SystemTime),
     Fn(Rc<dyn Callable>),
+    Class(Rc<LoxClass>),
+    Instance(Rc<LoxInstance>),
     Return(Box<LoxValue>),
     Nil,
 }
@@ -38,7 +42,9 @@ impl fmt::Display for LoxValue {
             LoxValue::Bool(b) => write!(f, "{}", b),
             LoxValue::Nil => write!(f, "nil"),
             LoxValue::Time(t) => write!(f, "{:?}", t),
-            LoxValue::Fn(callable) => write!(f, "{:?}", callable),
+            LoxValue::Fn(callable) => write!(f, "function: {:?}", callable),
+            LoxValue::Class(callable) => write!(f, "class: {:?}", callable),
+            LoxValue::Instance(callable) => write!(f, "instance: {:?}", callable),
             LoxValue::Return(value) => write!(f, "{:?}", value),
         }
     }

@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::callable::Callable;
@@ -51,6 +52,8 @@ impl Callable for LoxClass {
         _args: Vec<LoxValue>,
     ) -> Result<LoxValue, Error> {
         let instance = self.instantiate();
-        Ok(LoxValue::Instance(Rc::new(LoxInstance::new(&instance))))
+        Ok(LoxValue::Instance(Rc::new(RefCell::new(LoxInstance::new(
+            &instance,
+        )))))
     }
 }

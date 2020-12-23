@@ -60,11 +60,11 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<Lo
         Expr::Assign(left, right, distance) => visitor.visit_assign(left, right, distance.clone()),
         Expr::Binary(left, op, right) => visitor.visit_binary(left, op, right),
         Expr::Call(callee, paren, args) => visitor.visit_call(callee, paren, args.to_vec()),
-        // Expr::Get(_, _) => {}
+        Expr::Get(expr, name) => visitor.visit_get(expr, name),
         Expr::Grouping(expr) => visitor.visit_grouping(expr),
         Expr::Literal(lit) => visitor.visit_literal(lit),
         Expr::Logical(left, op, right) => visitor.visit_logical(left, op, right),
-        // Expr::Set(_, _, _) => {}
+        Expr::Set(expr, name, value) => visitor.visit_set(expr, name, value),
         // Expr::Super(_, _) => {}
         // Expr::This(_) => {}
         Expr::Unary(token, expr) => visitor.visit_unary(token, expr),

@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::cmp::PartialEq;
 use std::fmt;
 use std::rc::Rc;
@@ -16,7 +17,7 @@ pub enum LoxValue {
     Time(SystemTime),
     Fn(Rc<dyn Callable>),
     Class(Rc<LoxClass>),
-    Instance(Rc<LoxInstance>),
+    Instance(Rc<RefCell<LoxInstance>>),
     Return(Box<LoxValue>),
     Nil,
 }

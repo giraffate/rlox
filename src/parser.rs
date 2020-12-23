@@ -241,6 +241,7 @@ impl Parser {
                 Expr::Variable(token, _) => {
                     Expr::Assign(token, Box::new(value), Rc::new(Cell::new(-1)))
                 }
+                Expr::Get(expr, name) => Expr::Set(expr, name, Box::new(value)),
                 _ => panic!("invalid assignment target"),
             }
         }
@@ -340,6 +341,12 @@ impl Parser {
         loop {
             if self.is_match(vec![TokenType::LeftParen]) {
                 expr = self.finish_call(expr);
+            } else if self.is_match(vec![TokenType::Dot]) {
+                let name = self.consume(
+                    TokenType::Identifier,
+                    "expect property name after '.'".to_string(),
+                );
+                expr = Expr::Get(Box::new(expr), name);
             } else {
                 break;
             }

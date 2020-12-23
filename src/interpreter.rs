@@ -66,6 +66,31 @@ impl Visitor for Interpreter {
         Ok(lit.value())
     }
 
+    fn visit_get(&mut self, expr: &Expr, name: &Token) -> Result<LoxValue, Error> {
+        let expr = walk_expr(self, expr)?;
+        match expr {
+            LoxValue::Instance(instance) => instance.borrow().get(name),
+            _ => Err(Error {
+                kind: "runtime error".to_string(),
+                msg: "only instances have properties".to_string(),
+            }),
+        }
+    }
+
+    fn visit_set(&mut self, expr: &Expr, name: &Token, value: &Expr) -> Result<LoxValue, Error> {
+        let expr = walk_expr(self, expr)?;
+        match expr {
+            LoxValue::Instance(instance) => {
+                let value = walk_expr(self, value)?;
+                instance.borrow_mut().set(name, value)
+            }
+            _ => Err(Error {
+                kind: "runtime error".to_string(),
+                msg: "only instances have fields".to_string(),
+            }),
+        }
+    }
+
     fn visit_logical(
         &mut self,
         left_expr: &Expr,

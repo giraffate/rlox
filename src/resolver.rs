@@ -120,7 +120,7 @@ impl Visitor for Resolver {
     }
 
     fn visit_class(&mut self, name: &Token, _methods: Vec<Stmt>) -> Result<LoxValue, Error> {
-        self.declare(name);
+        self.declare(name)?;
         self.define(name);
         Ok(LoxValue::Nil)
     }
@@ -256,5 +256,16 @@ impl Visitor for Resolver {
 
     fn visit_stmt(&mut self, stmt: &Stmt) -> Result<LoxValue, Error> {
         walk_stmt(self, stmt)
+    }
+
+    fn visit_get(&mut self, expr: &Expr, _name: &Token) -> Result<LoxValue, Error> {
+        self.resolve_expr(expr)?;
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_set(&mut self, expr: &Expr, _name: &Token, value: &Expr) -> Result<LoxValue, Error> {
+        self.resolve_expr(expr)?;
+        self.resolve_expr(value)?;
+        Ok(LoxValue::Nil)
     }
 }

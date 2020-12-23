@@ -1,8 +1,8 @@
+use crate::error::Error;
 use crate::expr::Expr;
 use crate::lox_value::LoxValue;
 use crate::token::Token;
 use crate::visitor::Visitor;
-use crate::{error::Error, visitor};
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -35,9 +35,5 @@ pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<Lo
         Stmt::Print(expr) => visitor.visit_print(expr),
         Stmt::Return(keyword, value) => visitor.visit_return(keyword, value.as_ref()),
         Stmt::Var(name, init) => visitor.visit_var_stmt(name, init.as_ref()),
-        _ => Err(Error {
-            kind: "runtime error".to_string(),
-            msg: "unreachable".to_string(),
-        }),
     }
 }

@@ -12,6 +12,7 @@ use crate::visitor::Visitor;
 pub struct Resolver {
     scopes: Vec<HashMap<String, bool>>,
     functoin_type: FunctionType,
+    class_type: ClassType,
 }
 
 #[derive(Copy, Clone)]
@@ -21,11 +22,18 @@ enum FunctionType {
     None,
 }
 
+#[derive(Clone, Copy)]
+enum ClassType {
+    Class,
+    None,
+}
+
 impl Resolver {
     pub fn new() -> Resolver {
         Resolver {
             scopes: Vec::new(),
             functoin_type: FunctionType::None,
+            class_type: ClassType::None,
         }
     }
 
@@ -121,8 +129,15 @@ impl Visitor for Resolver {
     }
 
     fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+        let enclosing_class = self.class_type;
+        self.class_type = ClassType::Class;
         self.declare(name)?;
         self.define(name);
+
+        self.begin_scope();
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert("this".to_string(), true);
+        }
 
         for method in methods.iter() {
             match method {
@@ -137,6 +152,10 @@ impl Visitor for Resolver {
                 }
             }
         }
+
+        self.end_scope();
+
+        self.class_type = enclosing_class;
         Ok(LoxValue::Nil)
     }
 
@@ -281,6 +300,20 @@ impl Visitor for Resolver {
     fn visit_set(&mut self, expr: &Expr, _name: &Token, value: &Expr) -> Result<LoxValue, Error> {
         self.resolve_expr(expr)?;
         self.resolve_expr(value)?;
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_this(&mut self, token: &Token, distance: Rc<Cell<i32>>) -> Result<LoxValue, Error> {
+        match self.class_type {
+            ClassType::Class => {}
+            ClassType::None => {
+                return Err(Error {
+                    kind: "resolving error".to_string(),
+                    msg: "can't use 'this' outside of a class".to_string(),
+                })
+            }
+        }
+        self.resolve_local(distance, token);
         Ok(LoxValue::Nil)
     }
 }

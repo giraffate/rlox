@@ -19,7 +19,7 @@ pub enum Expr {
     Logical(Box<Expr>, Token, Box<Expr>),
     Set(Box<Expr>, Token, Box<Expr>),
     Super(Token, Token),
-    This(Token),
+    This(Token, Rc<Cell<i32>>),
     Unary(Token, Box<Expr>),
     Variable(Token, Rc<Cell<i32>>),
 }
@@ -48,7 +48,7 @@ impl fmt::Display for Expr {
             Expr::Super(keyword, method) => {
                 write!(f, "super: ({} {})", keyword.lexeme, method.lexeme)
             }
-            Expr::This(token) => write!(f, "this: ({})", token.lexeme),
+            Expr::This(token, _) => write!(f, "this: ({})", token.lexeme),
             Expr::Unary(token, expr) => write!(f, "unary: ({} {})", token.lexeme, expr),
             Expr::Variable(token, _) => write!(f, "variable: ({})", token.lexeme),
         }
@@ -66,7 +66,7 @@ pub fn walk_expr<V: Visitor + ?Sized>(visitor: &mut V, expr: &Expr) -> Result<Lo
         Expr::Logical(left, op, right) => visitor.visit_logical(left, op, right),
         Expr::Set(expr, name, value) => visitor.visit_set(expr, name, value),
         // Expr::Super(_, _) => {}
-        // Expr::This(_) => {}
+        Expr::This(token, distance) => visitor.visit_this(token, distance.clone()),
         Expr::Unary(token, expr) => visitor.visit_unary(token, expr),
         Expr::Variable(name, distance) => visitor.visit_var_expr(name, distance.clone()),
         _ => Err(Error {

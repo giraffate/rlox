@@ -17,6 +17,21 @@ pub struct LoxFunction {
     pub closure: Rc<RefCell<Env>>,
 }
 
+impl LoxFunction {
+    pub fn bind(&mut self, instance: LoxValue) -> LoxFunction {
+        self.closure
+            .borrow_mut()
+            .values
+            .insert("this".to_string(), instance);
+        LoxFunction {
+            name: self.name.clone(),
+            args: self.args.clone(),
+            body: self.body.clone(),
+            closure: self.closure.clone(),
+        }
+    }
+}
+
 impl Callable for LoxFunction {
     fn name(&self) -> String {
         self.name.lexeme.clone()

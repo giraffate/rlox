@@ -33,6 +33,7 @@ pub trait Visitor {
     ) -> Result<LoxValue, Error>;
     fn visit_get(&mut self, expr: &Expr, name: &Token) -> Result<LoxValue, Error>;
     fn visit_set(&mut self, expr: &Expr, name: &Token, value: &Expr) -> Result<LoxValue, Error>;
+    fn visit_this(&mut self, token: &Token, distance: Rc<Cell<i32>>) -> Result<LoxValue, Error>;
 
     fn visit_stmt(&mut self, stmt: &Stmt) -> Result<LoxValue, Error> {
         walk_stmt(self, stmt)

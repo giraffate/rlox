@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -7,7 +8,7 @@ use crate::lox_class::{LoxClass, LoxClassInner};
 use crate::lox_value::LoxValue;
 use crate::token::Token;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct LoxInstance {
     klass: Rc<LoxClassInner>,
     field: HashMap<String, LoxValue>,
@@ -28,9 +29,11 @@ impl LoxInstance {
         }
 
         match self.klass.find_method(&name.lexeme) {
-            Some(v) => {
-                let tmp = Rc::new(v) as Rc<dyn Callable>;
-                Ok(LoxValue::Fn(tmp))
+            Some(mut function) => {
+                let instance = LoxValue::Instance(Rc::new(RefCell::new(self.clone())));
+                function.bind(instance);
+                let function = Rc::new(function) as Rc<dyn Callable>;
+                Ok(LoxValue::Fn(function))
             }
             None => Err(Error {
                 kind: "runtime error".to_string(),

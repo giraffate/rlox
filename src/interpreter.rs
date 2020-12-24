@@ -94,6 +94,10 @@ impl Visitor for Interpreter {
         }
     }
 
+    fn visit_this(&mut self, token: &Token, distance: Rc<Cell<i32>>) -> Result<LoxValue, Error> {
+        self.lookup_variable(token, distance.get())
+    }
+
     fn visit_logical(
         &mut self,
         left_expr: &Expr,

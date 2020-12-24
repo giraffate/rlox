@@ -392,6 +392,8 @@ impl Parser {
             Expr::Grouping(Box::new(expr))
         } else if self.is_match(vec![TokenType::Identifier]) {
             Expr::Variable(self.previous(), Rc::new(Cell::new(-1)))
+        } else if self.is_match(vec![TokenType::This]) {
+            Expr::This(self.previous(), Rc::new(Cell::new(-1)))
         } else {
             panic!("{:?} not to land here", self.peek());
         }

@@ -1,5 +1,8 @@
-use std::cell::{Cell, RefCell};
 use std::rc::Rc;
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+};
 
 use crate::callable::Callable;
 use crate::env::Env;
@@ -222,11 +225,31 @@ impl Visitor for Interpreter {
         Ok(LoxValue::Nil)
     }
 
-    fn visit_class(&mut self, name: &Token, _methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+    fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error> {
         self.env
             .borrow_mut()
             .define(name.lexeme.clone(), LoxValue::Nil);
-        let klass = LoxClass::new(name.lexeme.clone());
+        let mut class_methods = HashMap::new();
+        for method in methods {
+            match method {
+                Stmt::Func(name, args, body) => {
+                    let function = LoxFunction {
+                        name: name.clone(),
+                        args,
+                        body: *body.clone(),
+                        closure: self.env.clone(),
+                    };
+                    class_methods.insert(name.lexeme.clone(), function);
+                }
+                _ => {
+                    return Err(Error {
+                        kind: "runtime error".to_string(),
+                        msg: "function only in class'es methods".to_string(),
+                    })
+                }
+            }
+        }
+        let klass = LoxClass::new(name.lexeme.clone(), class_methods);
         self.env
             .borrow_mut()
             .assign(name.lexeme.clone(), LoxValue::Class(Rc::new(klass)));

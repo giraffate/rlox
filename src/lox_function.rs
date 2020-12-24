@@ -9,7 +9,7 @@ use crate::lox_value::LoxValue;
 use crate::stmt::{walk_stmt, Stmt};
 use crate::token::Token;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct LoxFunction {
     pub name: Token,
     pub args: Vec<Token>,

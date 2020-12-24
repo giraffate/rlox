@@ -1,9 +1,11 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::callable::Callable;
 use crate::error::Error;
 use crate::interpreter::Interpreter;
+use crate::lox_function::LoxFunction;
 use crate::lox_instance::LoxInstance;
 use crate::lox_value::LoxValue;
 
@@ -15,12 +17,13 @@ pub struct LoxClass {
 #[derive(Debug)]
 pub struct LoxClassInner {
     name: String,
+    methods: HashMap<String, LoxFunction>,
 }
 
 impl LoxClass {
-    pub fn new(name: String) -> LoxClass {
+    pub fn new(name: String, methods: HashMap<String, LoxFunction>) -> LoxClass {
         LoxClass {
-            inner: Rc::new(LoxClassInner::new(name)),
+            inner: Rc::new(LoxClassInner::new(name, methods)),
         }
     }
 
@@ -32,8 +35,12 @@ impl LoxClass {
 }
 
 impl LoxClassInner {
-    fn new(name: String) -> LoxClassInner {
-        LoxClassInner { name }
+    fn new(name: String, methods: HashMap<String, LoxFunction>) -> LoxClassInner {
+        LoxClassInner { name, methods }
+    }
+
+    pub fn find_method(&self, name: &String) -> Option<LoxFunction> {
+        self.methods.get(name).map(|v| v.clone())
     }
 }
 

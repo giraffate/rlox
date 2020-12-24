@@ -17,6 +17,7 @@ pub struct Resolver {
 #[derive(Copy, Clone)]
 enum FunctionType {
     Function,
+    Method,
     None,
 }
 
@@ -119,9 +120,23 @@ impl Visitor for Resolver {
         Ok(LoxValue::Nil)
     }
 
-    fn visit_class(&mut self, name: &Token, _methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+    fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error> {
         self.declare(name)?;
         self.define(name);
+
+        for method in methods.iter() {
+            match method {
+                Stmt::Func(_name, args, body) => {
+                    self.resolve_function(args.to_vec(), body, FunctionType::Method)?;
+                }
+                _ => {
+                    return Err(Error {
+                        kind: "resolving error".to_string(),
+                        msg: "function only in class'es methods".to_string(),
+                    })
+                }
+            }
+        }
         Ok(LoxValue::Nil)
     }
 

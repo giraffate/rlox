@@ -19,6 +19,7 @@ pub struct Resolver {
 enum FunctionType {
     Function,
     Method,
+    Initializer,
     None,
 }
 
@@ -141,8 +142,13 @@ impl Visitor for Resolver {
 
         for method in methods.iter() {
             match method {
-                Stmt::Func(_name, args, body) => {
-                    self.resolve_function(args.to_vec(), body, FunctionType::Method)?;
+                Stmt::Func(name, args, body) => {
+                    let function_type = if name.lexeme == "init".to_string() {
+                        FunctionType::Initializer
+                    } else {
+                        FunctionType::Method
+                    };
+                    self.resolve_function(args.to_vec(), body, function_type)?;
                 }
                 _ => {
                     return Err(Error {
@@ -273,6 +279,15 @@ impl Visitor for Resolver {
         }
 
         if let Some(value) = value {
+            match self.functoin_type {
+                FunctionType::Initializer => {
+                    return Err(Error {
+                        kind: "resolving error".to_string(),
+                        msg: "can't return a value from an initializer".to_string(),
+                    })
+                }
+                _ => {}
+            }
             self.resolve_expr(value)?;
         }
         Ok(LoxValue::Nil)

@@ -27,10 +27,11 @@ impl LoxClass {
         }
     }
 
-    pub fn instantiate(&self) -> LoxClass {
-        LoxClass {
+    pub fn instantiate(&self) -> LoxInstance {
+        let klass = LoxClass {
             inner: self.inner.clone(),
-        }
+        };
+        LoxInstance::new(&klass)
     }
 }
 
@@ -50,17 +51,21 @@ impl Callable for LoxClass {
     }
 
     fn arity(&self) -> usize {
-        0
+        match self.inner.find_method(&"init".to_string()) {
+            Some(initializer) => initializer.arity(),
+            None => 0,
+        }
     }
 
-    fn call(
-        &self,
-        _interpreter: &mut Interpreter,
-        _args: Vec<LoxValue>,
-    ) -> Result<LoxValue, Error> {
-        let instance = self.instantiate();
-        Ok(LoxValue::Instance(Rc::new(RefCell::new(LoxInstance::new(
-            &instance,
-        )))))
+    fn call(&self, interpreter: &mut Interpreter, args: Vec<LoxValue>) -> Result<LoxValue, Error> {
+        let instance = Rc::new(RefCell::new(self.instantiate()));
+        match self.inner.find_method(&"init".to_string()) {
+            Some(mut initializer) => {
+                let instance = LoxValue::Instance(instance.clone());
+                initializer.bind(instance).call(interpreter, args)?;
+            }
+            None => {}
+        }
+        Ok(LoxValue::Instance(instance))
     }
 }

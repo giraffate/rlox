@@ -15,6 +15,7 @@ pub struct LoxFunction {
     pub args: Vec<Token>,
     pub body: Stmt,
     pub closure: Rc<RefCell<Env>>,
+    pub is_initilizer: bool,
 }
 
 impl LoxFunction {
@@ -28,6 +29,7 @@ impl LoxFunction {
             args: self.args.clone(),
             body: self.body.clone(),
             closure: self.closure.clone(),
+            is_initilizer: self.is_initilizer,
         }
     }
 }
@@ -56,9 +58,21 @@ impl Callable for LoxFunction {
         let ret = walk_stmt(interpreter, &self.body);
         interpreter.env = env;
 
+        if self.is_initilizer {
+            return closure.borrow().get_at("this".to_string(), 0).map_or(
+                Err(Error {
+                    kind: "runtime error".to_string(),
+                    msg: "no initializer exists".to_string(),
+                }),
+                |v| Ok(v),
+            );
+        }
         match ret {
             Ok(LoxValue::Return(value)) => Ok(*value),
-            _ => ret,
+            _ => match closure.borrow().get_at("this".to_string(), 0) {
+                Some(value) => Ok(value),
+                None => ret,
+            },
         }
     }
 }

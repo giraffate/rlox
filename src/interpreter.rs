@@ -222,6 +222,7 @@ impl Visitor for Interpreter {
             args,
             body: body.clone(),
             closure: self.env.clone(),
+            is_initilizer: false,
         };
         self.env
             .borrow_mut()
@@ -242,6 +243,7 @@ impl Visitor for Interpreter {
                         args,
                         body: *body.clone(),
                         closure: self.env.clone(),
+                        is_initilizer: name.lexeme == "init",
                     };
                     class_methods.insert(name.lexeme.clone(), function);
                 }

@@ -20,15 +20,14 @@ pub struct LoxFunction {
 
 impl LoxFunction {
     pub fn bind(&mut self, instance: LoxValue) -> LoxFunction {
-        self.closure
-            .borrow_mut()
-            .values
-            .insert("this".to_string(), instance);
+        let mut env = Env::new();
+        env.enclosing = Some(self.closure.clone());
+        env.values.insert("this".to_string(), instance);
         LoxFunction {
             name: self.name.clone(),
             args: self.args.clone(),
             body: self.body.clone(),
-            closure: self.closure.clone(),
+            closure: Rc::new(RefCell::new(env)),
             is_initilizer: self.is_initilizer,
         }
     }
@@ -57,7 +56,6 @@ impl Callable for LoxFunction {
         interpreter.env = closure.clone();
         let ret = walk_stmt(interpreter, &self.body);
         interpreter.env = env;
-
         if self.is_initilizer {
             return closure.borrow().get_at("this".to_string(), 0).map_or(
                 Err(Error {

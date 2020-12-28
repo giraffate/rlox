@@ -34,12 +34,23 @@ pub trait Visitor {
     fn visit_get(&mut self, expr: &Expr, name: &Token) -> Result<LoxValue, Error>;
     fn visit_set(&mut self, expr: &Expr, name: &Token, value: &Expr) -> Result<LoxValue, Error>;
     fn visit_this(&mut self, token: &Token, distance: Rc<Cell<i32>>) -> Result<LoxValue, Error>;
+    fn visit_super(
+        &mut self,
+        keyword: &Token,
+        method: &Token,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error>;
 
     fn visit_stmt(&mut self, stmt: &Stmt) -> Result<LoxValue, Error> {
         walk_stmt(self, stmt)
     }
 
-    fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error>;
+    fn visit_class(
+        &mut self,
+        name: &Token,
+        superclass: Option<Expr>,
+        methods: Vec<Stmt>,
+    ) -> Result<LoxValue, Error>;
     fn visit_expr_stmt(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_print(&mut self, expr: &Expr) -> Result<LoxValue, Error>;
     fn visit_block(&mut self, stmts: Vec<Stmt>) -> Result<LoxValue, Error>;

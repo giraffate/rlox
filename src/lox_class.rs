@@ -16,14 +16,19 @@ pub struct LoxClass {
 
 #[derive(Debug)]
 pub struct LoxClassInner {
-    name: String,
+    pub name: String,
+    superclass: Option<Rc<LoxClass>>,
     methods: HashMap<String, LoxFunction>,
 }
 
 impl LoxClass {
-    pub fn new(name: String, methods: HashMap<String, LoxFunction>) -> LoxClass {
+    pub fn new(
+        name: String,
+        superclass: Option<Rc<LoxClass>>,
+        methods: HashMap<String, LoxFunction>,
+    ) -> LoxClass {
         LoxClass {
-            inner: Rc::new(LoxClassInner::new(name, methods)),
+            inner: Rc::new(LoxClassInner::new(name, superclass, methods)),
         }
     }
 
@@ -36,12 +41,26 @@ impl LoxClass {
 }
 
 impl LoxClassInner {
-    fn new(name: String, methods: HashMap<String, LoxFunction>) -> LoxClassInner {
-        LoxClassInner { name, methods }
+    fn new(
+        name: String,
+        superclass: Option<Rc<LoxClass>>,
+        methods: HashMap<String, LoxFunction>,
+    ) -> LoxClassInner {
+        LoxClassInner {
+            name,
+            superclass,
+            methods,
+        }
     }
 
     pub fn find_method(&self, name: &String) -> Option<LoxFunction> {
-        self.methods.get(name).map(|v| v.clone())
+        self.methods
+            .get(name)
+            .map(|v| v.clone())
+            .or_else(|| match &self.superclass {
+                Some(superclass) => superclass.inner.find_method(name),
+                None => None,
+            })
     }
 }
 

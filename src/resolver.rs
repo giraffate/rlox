@@ -129,11 +129,33 @@ impl Visitor for Resolver {
         Ok(LoxValue::Nil)
     }
 
-    fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+    fn visit_class(
+        &mut self,
+        name: &Token,
+        superclass: Option<Expr>,
+        methods: Vec<Stmt>,
+    ) -> Result<LoxValue, Error> {
         let enclosing_class = self.class_type;
         self.class_type = ClassType::Class;
         self.declare(name)?;
         self.define(name);
+
+        if let Some(superclass) = superclass.clone() {
+            if let Expr::Variable(ref superclass, _) = superclass {
+                if name.lexeme == superclass.lexeme {
+                    return Err(Error {
+                        kind: "resolving error".to_string(),
+                        msg: "a class can't inherit from itself".to_string(),
+                    });
+                }
+            }
+            self.resolve_expr(&superclass)?;
+
+            self.begin_scope();
+            if let Some(scope) = self.scopes.last_mut() {
+                scope.insert("super".to_string(), true);
+            }
+        }
 
         self.begin_scope();
         if let Some(scope) = self.scopes.last_mut() {
@@ -161,7 +183,21 @@ impl Visitor for Resolver {
 
         self.end_scope();
 
+        if let Some(_) = superclass {
+            self.end_scope();
+        }
+
         self.class_type = enclosing_class;
+        Ok(LoxValue::Nil)
+    }
+
+    fn visit_super(
+        &mut self,
+        keyword: &Token,
+        _method: &Token,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error> {
+        self.resolve_local(distance, keyword);
         Ok(LoxValue::Nil)
     }
 

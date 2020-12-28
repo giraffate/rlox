@@ -31,7 +31,7 @@ impl LoxInstance {
         match self.klass.find_method(&name.lexeme) {
             Some(mut function) => {
                 let instance = LoxValue::Instance(Rc::new(RefCell::new(self.clone())));
-                function.bind(instance);
+                let function = function.bind(instance);
                 let function = Rc::new(function) as Rc<dyn Callable>;
                 Ok(LoxValue::Fn(function))
             }

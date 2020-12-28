@@ -33,6 +33,14 @@ impl Parser {
 
     fn class_declaration(&mut self) -> Stmt {
         let name = self.consume(TokenType::Identifier, "expect class name".to_string());
+
+        let superclass = if self.is_match(vec![TokenType::Less]) {
+            self.consume(TokenType::Identifier, "expect superclass name".to_string());
+            Some(Expr::Variable(self.previous(), Rc::new(Cell::new(-1))))
+        } else {
+            None
+        };
+
         self.consume(
             TokenType::LeftBrace,
             "expect '{' before class body".to_string(),
@@ -48,7 +56,7 @@ impl Parser {
             "expect '}' after class body".to_string(),
         );
 
-        Stmt::Class(name, Box::new(methods))
+        Stmt::Class(name, superclass, Box::new(methods))
     }
 
     fn function(&mut self, kind: String) -> Stmt {
@@ -394,6 +402,14 @@ impl Parser {
             Expr::Variable(self.previous(), Rc::new(Cell::new(-1)))
         } else if self.is_match(vec![TokenType::This]) {
             Expr::This(self.previous(), Rc::new(Cell::new(-1)))
+        } else if self.is_match(vec![TokenType::Super]) {
+            let keyword = self.previous();
+            self.consume(TokenType::Dot, "expect '.' after 'super'".to_string());
+            let method = self.consume(
+                TokenType::Identifier,
+                "expect superclass method name".to_string(),
+            );
+            Expr::Super(keyword, method, Rc::new(Cell::new(-1)))
         } else {
             panic!("{:?} not to land here", self.peek());
         }

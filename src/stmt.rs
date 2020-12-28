@@ -8,7 +8,7 @@ use crate::visitor::Visitor;
 #[derive(Clone, Debug)]
 pub enum Stmt {
     Block(Vec<Stmt>),
-    Class(Token, Box<Vec<Stmt>>),
+    Class(Token, Option<Expr>, Box<Vec<Stmt>>),
     Expr(Expr),
     Func(Token, Vec<Token>, Box<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
@@ -21,7 +21,13 @@ pub enum Stmt {
 pub fn walk_stmt<V: Visitor + ?Sized>(visitor: &mut V, stmt: &Stmt) -> Result<LoxValue, Error> {
     match stmt {
         Stmt::Block(stmts) => visitor.visit_block(stmts.to_vec()),
-        Stmt::Class(name, methods) => visitor.visit_class(name, methods.to_vec()),
+        Stmt::Class(name, superclass, methods) => {
+            let superclass = match superclass {
+                Some(v) => Some(v.clone()),
+                None => None,
+            };
+            visitor.visit_class(name, superclass, methods.to_vec())
+        }
         Stmt::Expr(expr) => visitor.visit_expr_stmt(expr),
         Stmt::Func(name, args, body) => visitor.visit_func(name, args.to_vec(), body),
         Stmt::If(cond, then_branch, else_branch) => {

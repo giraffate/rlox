@@ -98,6 +98,31 @@ impl Visitor for Interpreter {
         self.lookup_variable(token, distance.get())
     }
 
+    fn visit_super(
+        &mut self,
+        _keyword: &Token,
+        method: &Token,
+        distance: Rc<Cell<i32>>,
+    ) -> Result<LoxValue, Error> {
+        let superclass = self
+            .env
+            .borrow()
+            .get_at("super".to_string(), distance.get());
+        let this = self
+            .env
+            .borrow()
+            .get_at("this".to_string(), distance.get() - 1);
+        match superclass {
+            Some(LoxValue::Class(superclass)) => {
+                if let Some(mut super_method) = superclass.inner.find_method(&method.lexeme) {
+                    return Ok(LoxValue::Fn(Rc::new(super_method.bind(this.unwrap()))));
+                }
+            }
+            _ => {}
+        }
+        unreachable!("undefined property '{}'", method.lexeme);
+    }
+
     fn visit_logical(
         &mut self,
         left_expr: &Expr,
@@ -230,10 +255,46 @@ impl Visitor for Interpreter {
         Ok(LoxValue::Nil)
     }
 
-    fn visit_class(&mut self, name: &Token, methods: Vec<Stmt>) -> Result<LoxValue, Error> {
+    fn visit_class(
+        &mut self,
+        name: &Token,
+        superclass: Option<Expr>,
+        methods: Vec<Stmt>,
+    ) -> Result<LoxValue, Error> {
+        let superclass = if let Some(superclass) = superclass {
+            let superclass = walk_expr(self, &superclass)?;
+            match superclass {
+                LoxValue::Class(class) => Some(class.clone()),
+                _ => {
+                    return Err(Error {
+                        kind: "runtime error".to_string(),
+                        msg: "superclass must be a class".to_string(),
+                    })
+                }
+            }
+        } else {
+            None
+        };
+
         self.env
             .borrow_mut()
             .define(name.lexeme.clone(), LoxValue::Nil);
+
+        let parent = if let Some(superclass) = superclass.clone() {
+            let mut child = Env::new();
+            let parent = self.env.clone();
+            child.enclosing = Some(parent.clone());
+            self.env = Rc::new(RefCell::new(child));
+
+            self.env
+                .borrow_mut()
+                .define("super".to_string(), LoxValue::Class(superclass));
+
+            Some(parent)
+        } else {
+            None
+        };
+
         let mut class_methods = HashMap::new();
         for method in methods {
             match method {
@@ -255,7 +316,12 @@ impl Visitor for Interpreter {
                 }
             }
         }
-        let klass = LoxClass::new(name.lexeme.clone(), class_methods);
+        let klass = LoxClass::new(name.lexeme.clone(), superclass.clone(), class_methods);
+
+        if let Some(parent) = parent {
+            self.env = parent;
+        }
+
         self.env
             .borrow_mut()
             .assign(name.lexeme.clone(), LoxValue::Class(Rc::new(klass)));
@@ -346,7 +412,7 @@ impl Interpreter {
                 Some(value) => Ok(value.clone()),
                 None => Err(Error {
                     kind: "runtime error".to_string(),
-                    msg: format!("{} is not initialized", token.lexeme),
+                    msg: format!("{}:{} is not initialized", token.lexeme, distance),
                 }),
             }
         } else {
@@ -354,7 +420,7 @@ impl Interpreter {
                 Some(value) => Ok(value.clone()),
                 None => Err(Error {
                     kind: "runtime error".to_string(),
-                    msg: format!("{} is not initialized", token.lexeme),
+                    msg: format!("{}:{} is not initialized", token.lexeme, distance),
                 }),
             }
         }

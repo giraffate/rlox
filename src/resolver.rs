@@ -26,6 +26,7 @@ enum FunctionType {
 #[derive(Clone, Copy)]
 enum ClassType {
     Class,
+    Subclass,
     None,
 }
 
@@ -149,6 +150,7 @@ impl Visitor for Resolver {
                     });
                 }
             }
+            self.class_type = ClassType::Subclass;
             self.resolve_expr(&superclass)?;
 
             self.begin_scope();
@@ -197,6 +199,21 @@ impl Visitor for Resolver {
         _method: &Token,
         distance: Rc<Cell<i32>>,
     ) -> Result<LoxValue, Error> {
+        match self.class_type {
+            ClassType::None => {
+                return Err(Error {
+                    kind: "resolving error".to_string(),
+                    msg: "can't use 'super' outside of a class".to_string(),
+                })
+            }
+            ClassType::Class => {
+                return Err(Error {
+                    kind: "resolving error".to_string(),
+                    msg: "can't use 'super' in a class with no superclass".to_string(),
+                })
+            }
+            ClassType::Subclass => {}
+        }
         self.resolve_local(distance, keyword);
         Ok(LoxValue::Nil)
     }
@@ -356,7 +373,7 @@ impl Visitor for Resolver {
 
     fn visit_this(&mut self, token: &Token, distance: Rc<Cell<i32>>) -> Result<LoxValue, Error> {
         match self.class_type {
-            ClassType::Class => {}
+            ClassType::Class | ClassType::Subclass => {}
             ClassType::None => {
                 return Err(Error {
                     kind: "resolving error".to_string(),
